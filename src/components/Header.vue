@@ -18,19 +18,19 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <router-link to="/" class="nav-link text-white">🏠 Trang chủ</router-link>
+            <router-link to="/" class="nav-link text-white">Trang chủ</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/gioi-thieu" class="nav-link text-white">📖 Giới thiệu</router-link>
+            <router-link to="/gioi-thieu" class="nav-link text-white">Giới thiệu</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/kho-sach" class="nav-link text-white">📚 Kho sách</router-link>
+            <router-link to="/kho-sach" class="nav-link text-white">Kho sách</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/su-kien" class="nav-link text-white">📅 Sự kiện</router-link>
+            <router-link to="/su-kien" class="nav-link text-white">Sự kiện</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/lien-he" class="nav-link text-white">📞 Liên hệ</router-link>
+            <router-link to="/lien-he" class="nav-link text-white">Liên hệ</router-link>
           </li>
         </ul>
 
@@ -46,12 +46,12 @@
               style="object-fit: cover"
             />
             <span class="text-white">{{ user.name }}</span>
-            <button class="btn btn-outline-light btn-sm" @click="logout">Đăng xuất</button>
+            <button class="btn btn-secondary text-white" @click="logout">Đăng xuất</button>
           </template>
           <template v-else>
-            <a :href="googleLoginUrl" class="btn btn-light">
-              🔐 Đăng nhập Google
-            </a>
+            <router-link to="/login" class="btn btn-light">
+              Đăng nhập
+            </router-link>
           </template>
         </div>
       </div>
@@ -65,11 +65,6 @@ export default {
     return {
       user: null,
     };
-  },
-  computed: {
-    googleLoginUrl() {
-      return "http://localhost:3000/api/auth/google";
-    }
   },
   mounted() {
     const storedUser = localStorage.getItem("user");
