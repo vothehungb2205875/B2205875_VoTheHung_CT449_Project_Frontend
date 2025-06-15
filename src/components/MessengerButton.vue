@@ -19,7 +19,7 @@ const messengerLink = `https://m.me/${pageId}`;
 <style scoped>
 .messenger-btn {
   position: fixed;
-  bottom: 20px;
+  bottom: 100px;
   right: 20px;
   z-index: 9999;
   width: 50px;

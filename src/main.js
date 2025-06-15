@@ -13,6 +13,7 @@ import {
   faArrowLeft,
   faRightToBracket,
   faRightFromBracket,
+  faArrowUp,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faFacebook,
@@ -28,7 +29,8 @@ library.add(
   faGithub,
   faRightToBracket,
   faRightFromBracket,
-  faFacebookMessenger
+  faFacebookMessenger,
+  faArrowUp
 );
 
 /* Tạo app */

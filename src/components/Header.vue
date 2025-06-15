@@ -21,7 +21,7 @@
             <router-link to="/" class="nav-link text-white">Trang chủ</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/gioi-thieu" class="nav-link text-white">Giới thiệu</router-link>
+            <router-link to="/Introduction" class="nav-link text-white">Giới thiệu</router-link>
           </li>
           <li class="nav-item">
             <router-link to="/kho-sach" class="nav-link text-white">Kho sách</router-link>
@@ -83,6 +83,7 @@ export default {
   },
   methods: {
     logout() {
+      localStorage.removeItem("user");
       api.post("/auth/logout")
         .then(() => {
           this.user = null;
@@ -93,8 +94,15 @@ export default {
         });
     },
     getAvatarUrl(avatarPath) {
-      if (!avatarPath) return "/images/default-avatar.jpg"; 
-        return `http://localhost:3000${avatarPath}`;
+      if (!avatarPath) return "/images/default-avatar.jpg";
+
+      // Nếu là URL đầy đủ (bắt đầu bằng http hoặc https), trả nguyên URL
+      if (/^https?:\/\//.test(avatarPath)) {
+        return avatarPath;
+      }
+
+      // Ngược lại, coi như đường dẫn nội bộ
+      return `http://localhost:3000${avatarPath}`;
     }
   }
 };

@@ -131,9 +131,16 @@ export default {
       }
     },
     getAvatarUrl(avatarPath) {
-      if (!avatarPath) return "/images/default-avatar.jpg"; 
-        return `http://localhost:3000${avatarPath}`;
-    } 
+      if (!avatarPath) return "/images/default-avatar.jpg";
+
+      // Nếu là URL đầy đủ (bắt đầu bằng http hoặc https), trả nguyên URL
+      if (/^https?:\/\//.test(avatarPath)) {
+        return avatarPath;
+      }
+
+      // Ngược lại, coi như đường dẫn nội bộ
+      return `http://localhost:3000${avatarPath}`;
+    }
   },
 };
 </script>

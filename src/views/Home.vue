@@ -31,6 +31,7 @@
                                             <div class="card-body text-start">
                                                 <h6 class="card-title fw-bold">{{ book.TenSach }}</h6>
                                                 <p class="card-text text-muted mb-1">Tác giả: {{ book.TacGia }}</p>
+                                                <p class="card-text text-muted mb-1">Còn: {{ book.SoQuyen }}</p>
                                             </div>
                                         </div>
                                     </router-link>

@@ -2,16 +2,19 @@ import { createWebHistory, createRouter } from "vue-router";
 import Home from "@/views/Home.vue";
 import BookDetail from "@/views/BookDetail.vue";
 import LoginSuccess from "../views/LoginSuccess.vue";
-import Login from "@/views/Login.vue";
 import Profile from "@/views/Profile.vue";
-import Register from "@/views/Register.vue";
+import Auth from "@/views/Auth.vue";
+import DashBoard from "@/views/DashBoard.vue";
+import Introduction from "@/views/Introduction.vue";
 const routes = [
   { path: "/", name: "home", component: Home },
   { path: "/books/:id", name: "BookDetail", component: BookDetail },
   { path: "/login/success", component: LoginSuccess },
-  { path: "/login", name: "Login", component: Login },
+  { path: "/login", name: "Login", component: Auth },
   { path: "/profile", name: "Profile", component: Profile },
-  { path: "/register", name: "Register", component: Register },
+  { path: "/register", name: "Register", component: Auth },
+  { path: "/dashboard", name: "DashBoard", component: DashBoard },
+  { path: "/introduction", name: "Introduction", component: Introduction },
 ];
 
 const router = createRouter({
