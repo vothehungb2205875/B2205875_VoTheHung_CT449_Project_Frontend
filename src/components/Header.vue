@@ -37,20 +37,23 @@
         <!-- Phần đăng nhập -->
         <div class="d-flex align-items-center gap-2">
           <template v-if="user">
-            <img
-              :src="user.avatar"
-              alt="Avatar"
-              class="rounded-circle"
-              width="32"
-              height="32"
-              style="object-fit: cover"
-            />
-            <span class="text-white">{{ user.name }}</span>
-            <button class="btn btn-secondary text-white" @click="logout">Đăng xuất</button>
+            <router-link :to="'/profile'" class="d-flex align-items-center text-white text-decoration-none gap-2">
+              <img
+                :src="user.avatar"
+                alt="Avatar"
+                class="rounded-circle"
+                width="32"
+                height="32"
+                style="object-fit: cover"
+              />
+              <span>{{ user.name }}</span>
+            </router-link>
+            <button class="btn btn-secondary text-white" @click="logout"><font-awesome-icon icon="fa-solid fa-right-from-bracket" />Logout</button>
           </template>
           <template v-else>
             <router-link to="/login" class="btn btn-light">
-              Đăng nhập
+              <font-awesome-icon icon="fa-solid fa-right-to-bracket" />
+              Login
             </router-link>
           </template>
         </div>
@@ -60,24 +63,36 @@
 </template>
 
 <script>
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import api from "@/services/api.service";
+
 export default {
+  components: { FontAwesomeIcon },
   data() {
     return {
       user: null,
     };
   },
-  mounted() {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      this.user = JSON.parse(storedUser);
+  async mounted() {
+    try {
+      const res = await api.get("/auth/me");
+      this.user = res.data;
+    } catch (err) {
+      console.warn("Người dùng chưa đăng nhập.");
     }
   },
   methods: {
     logout() {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      location.reload(); // hoặc this.$router.push("/")
+      api.post("/auth/logout")
+        .then(() => {
+          this.user = null;
+          this.$router.push("/login");
+        })
+        .catch(() => {
+          alert("Đăng xuất thất bại");
+        });
     }
   }
 };
 </script>
+

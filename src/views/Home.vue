@@ -57,21 +57,21 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
-import axios from 'axios'
-import Header from '@/components/Header.vue'
-import Footer from '@/components/Footer.vue'
+import { ref, onMounted } from 'vue';
+import api from '@/services/api.service';
+import Header from '@/components/Header.vue';
+import Footer from '@/components/Footer.vue';
 
-const books = ref([])
+const books = ref([]);
 
 onMounted(async () => {
-    try {
-        const response = await axios.get('http://localhost:3000/api/books')
-        books.value = response.data
-    } catch (error) {
-        console.error('Lỗi khi tải sách:', error)
-    }
-})
+  try {
+    const response = await api.get("/books");
+    books.value = response.data;
+  } catch (error) {
+    console.error("Lỗi khi tải sách:", error);
+  }
+});
 </script>
 
 <style scoped>

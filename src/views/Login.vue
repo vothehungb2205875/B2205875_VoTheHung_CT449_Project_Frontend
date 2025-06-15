@@ -27,7 +27,7 @@
 
         <div class="text-center mt-3">
           <a href="#" class="text-light text-decoration-none">Quên mật khẩu?</a>
-          <a href="#" class="text-light text-decoration-none"> Đăng ký</a>
+          <router-link to="/register" class="text-light text-decoration-none"> Đăng ký</router-link>
         </div>
       </div>
     </div>
@@ -35,6 +35,8 @@
 </template>
 
 <script>
+import api from "@/services/api.service";
+
 export default {
   data() {
     return {
@@ -42,14 +44,27 @@ export default {
       password: "",
     };
   },
+  methods: {
+    async handleLogin() {
+      try {
+        const res = await api.post("/auth/login", {
+          email: this.email,
+          MatKhau: this.password,
+        });
+
+        alert("Đăng nhập thành công!");
+        // Lưu user nếu cần
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        this.$router.push("/");
+      } catch (err) {
+        console.error(err);
+        alert("Sai email hoặc mật khẩu.");
+      }
+    },
+  },
   computed: {
     googleLoginUrl() {
       return "http://localhost:3000/api/auth/google";
-    },
-  },
-  methods: {
-    handleLogin() {
-      alert(`Demo login với ${this.email} / ${this.password}`);
     },
   },
 };
