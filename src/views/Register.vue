@@ -6,6 +6,7 @@
           <h2 class="text-center mb-4 text-white">Đăng ký tài khoản</h2>
   
           <form @submit.prevent="handleRegister">
+            <input type="file" class="form-control mb-3" @change="handleAvatarChange" accept="image/*" />
             <input v-model="form.HoLot" type="text" class="form-control mb-3" placeholder="Họ lót" required />
             <input v-model="form.Ten" type="text" class="form-control mb-3" placeholder="Tên" required />
             <input v-model="form.email" type="email" class="form-control mb-3" placeholder="Email" required />
@@ -50,6 +51,11 @@
   });
   
   const confirmPassword = ref("");
+  const avatar = ref(null); // lưu file ảnh
+  
+  const handleAvatarChange = (event) => {
+    avatar.value = event.target.files[0];
+  };
   
   const handleRegister = async () => {
     if (form.MatKhau !== confirmPassword.value) {
@@ -58,10 +64,17 @@
     }
   
     try {
-      await api.post("/auth/register", {
-        ...form,
-        name: form.HoLot + " " + form.Ten,
-        provider: "local",
+      const formData = new FormData();
+      for (const key in form) {
+        formData.append(key, form[key]);
+      }
+  
+      if (avatar.value) {
+        formData.append("avatar", avatar.value);
+      }
+  
+      await api.post("/auth/register", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
   
       alert("✅ Đăng ký thành công!");
@@ -72,6 +85,7 @@
     }
   };
   </script>
+  
   
   <style scoped>
   .register-page {

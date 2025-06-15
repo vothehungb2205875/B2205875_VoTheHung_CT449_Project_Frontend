@@ -10,12 +10,13 @@
         <div v-if="reader && !editing" class="card shadow-sm p-4 mx-auto" style="max-width: 700px;">
           <div class="d-flex align-items-center gap-4 mb-4">
             <img
-              :src="reader.avatar"
+              :src="getAvatarUrl(reader.avatar)"
               alt="Avatar"
               class="rounded-circle border"
               width="100"
               height="100"
               style="object-fit: cover;"
+              @error="handleImageError"
             />
             <div>
               <h4 class="mb-1">{{ reader.name }}</h4>
@@ -129,6 +130,10 @@ export default {
         alert("Không thể cập nhật.");
       }
     },
+    getAvatarUrl(avatarPath) {
+      if (!avatarPath) return "/images/default-avatar.jpg"; 
+        return `http://localhost:3000${avatarPath}`;
+    } 
   },
 };
 </script>

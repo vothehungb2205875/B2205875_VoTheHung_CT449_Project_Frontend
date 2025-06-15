@@ -39,7 +39,7 @@
           <template v-if="user">
             <router-link :to="'/profile'" class="d-flex align-items-center text-white text-decoration-none gap-2">
               <img
-                :src="user.avatar"
+                :src="getAvatarUrl(user.avatar)"
                 alt="Avatar"
                 class="rounded-circle"
                 width="32"
@@ -91,6 +91,10 @@ export default {
         .catch(() => {
           alert("Đăng xuất thất bại");
         });
+    },
+    getAvatarUrl(avatarPath) {
+      if (!avatarPath) return "/images/default-avatar.jpg"; 
+        return `http://localhost:3000${avatarPath}`;
     }
   }
 };
