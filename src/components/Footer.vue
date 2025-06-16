@@ -6,20 +6,19 @@
           <!-- Cột 1: Thông tin liên hệ -->
           <div class="col-md-3 mb-3">
             <h6>📍 Thông tin liên hệ</h6>
-            <p>Thư viện trực tuyến ABC</p>
-            <p>123 Đường Sách, Quận 1, TP.HCM</p>
-            <p>📞 028 1234 5678</p>
-            <p>📧 info@thuvienabc.vn</p>
+            <p>Thư viện trực tuyến CTLIB</p>
+            <p>Khu II, Đ. 3 Tháng 2, Xuân Khánh, Ninh Kiều, Cần Thơ</p>
+            <p>📞 0292 3831 530</p>
+            <p>📧 tthl@ctu.edu.vn</p>
           </div>
   
           <!-- Cột 2: Nhà xuất bản tài trợ -->
           <div class="col-md-3 mb-3">
             <h6>🏢 Nhà xuất bản tài trợ</h6>
             <ul class="list-unstyled small">
-              <li>NXB Giáo Dục Việt Nam</li>
-              <li>NXB Kim Đồng</li>
-              <li>NXB Trẻ</li>
-              <li>NXB Văn Học</li>
+              <li>NXB ĐHQG HCM</li>
+              <li>NXB ĐHQG HN</li>
+              <li>NXB ĐHCT</li>
             </ul>
           </div>
   

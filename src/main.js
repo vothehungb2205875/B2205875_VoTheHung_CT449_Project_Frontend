@@ -1,4 +1,5 @@
 import { createApp } from "vue";
+import { createPinia } from "pinia";
 import App from "./App.vue";
 import router from "./router";
 
@@ -14,6 +15,8 @@ import {
   faRightToBracket,
   faRightFromBracket,
   faArrowUp,
+  faAnglesLeft,
+  faAnglesRight,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faFacebook,
@@ -30,11 +33,13 @@ library.add(
   faRightToBracket,
   faRightFromBracket,
   faFacebookMessenger,
-  faArrowUp
+  faArrowUp,
+  faAnglesLeft,
+  faAnglesRight
 );
 
 /* Tạo app */
 const app = createApp(App);
-
+app.use(createPinia());
 app.component("font-awesome-icon", FontAwesomeIcon);
 app.use(router).mount("#app");

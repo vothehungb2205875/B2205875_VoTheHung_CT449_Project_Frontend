@@ -1,12 +1,12 @@
 import createApiClient from "./api.service";
-
+// Nơi nhận dữ liêu từ API và xử lý các yêu cầu liên quan đến sách
 class BookService {
   constructor(baseUrl = "/api/books") {
     this.api = createApiClient(baseUrl);
   }
 
   async getAll() {
-    return (await this.api.get("/")).data;
+    return (await this.api.get("/")).data; // .data là để lấy dữ liệu từ phản hồi thay vì toàn bộ đối tượng phản hồi
   }
 
   async create(data) {
@@ -27,6 +27,10 @@ class BookService {
 
   async delete(id) {
     return (await this.api.delete(`/${id}`)).data;
+  }
+
+  async getTopViewed() {
+    return (await this.api.get("/top")).data;
   }
 }
 

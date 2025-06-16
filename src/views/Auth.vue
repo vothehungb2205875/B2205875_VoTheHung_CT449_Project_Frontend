@@ -58,12 +58,12 @@
   </template>
   
   <script>
-  import api from "@/services/api.service";
+  import AuthService from "@/services/auth.service";
   
   export default {
     data() {
       return {
-        isLogin: true, // kiểm soát login / register
+        isLogin: true,
         email: "",
         password: "",
         confirmPassword: "",
@@ -88,29 +88,26 @@
     methods: {
       async handleLogin() {
         try {
-          const res = await api.post("/auth/login", {
+          const res = await AuthService.login({
             email: this.email,
             MatKhau: this.password,
           });
-
+  
           alert("Đăng nhập thành công!");
-          localStorage.setItem("user", JSON.stringify(res.data.user));
-
-          const role = res.data.user.role;
-
-          if (role === "reader") {
-            this.$router.push("/");
-          } else {
-            this.$router.push("/dashboard");
-          }
+          localStorage.setItem("user", JSON.stringify(res.user));
+  
+          const role = res.user.role;
+          this.$router.push(role === "reader" ? "/" : "/dashboard");
         } catch (err) {
           console.error(err);
           alert("Sai email hoặc mật khẩu.");
         }
       },
+  
       handleAvatarChange(event) {
         this.avatar = event.target.files[0];
       },
+  
       async handleRegister() {
         if (this.form.MatKhau !== this.confirmPassword) {
           alert("Mật khẩu xác nhận không khớp!");
@@ -126,12 +123,10 @@
             formData.append("avatar", this.avatar);
           }
   
-          await api.post("/auth/register", formData, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
+          await AuthService.register(formData);
   
           alert("Đăng ký thành công!");
-          this.isLogin = true; // quay lại form đăng nhập
+          this.isLogin = true;
         } catch (err) {
           console.error(err);
           alert("Đăng ký thất bại: " + (err.response?.data?.message || "Lỗi không xác định"));
@@ -140,6 +135,7 @@
     },
   };
   </script>
+  
   
 <style scoped>
 .login-page {

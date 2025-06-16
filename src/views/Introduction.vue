@@ -1,5 +1,5 @@
 <template>
-    <Header />
+
     <div class="container py-5">
       <h2 class="mb-4 text-primary fw-bold text-center">📚 Giới thiệu Trung tâm Học liệu – Đại học Cần Thơ</h2>
   
@@ -78,12 +78,10 @@
         </ul>
       </section>
     </div>
-    <Footer />
+
   </template>
   
   <script setup>
-    import Header from '@/components/Header.vue';
-    import Footer from '@/components/Footer.vue';
   </script>
   
   <style scoped>

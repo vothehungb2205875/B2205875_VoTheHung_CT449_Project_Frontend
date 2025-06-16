@@ -17,38 +17,22 @@
 
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
-          <li class="nav-item">
-            <router-link to="/" class="nav-link text-white">Trang chủ</router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/Introduction" class="nav-link text-white">Giới thiệu</router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/kho-sach" class="nav-link text-white">Kho sách</router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/su-kien" class="nav-link text-white">Sự kiện</router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/lien-he" class="nav-link text-white">Liên hệ</router-link>
-          </li>
+          <li class="nav-item"><router-link to="/" class="nav-link text-white">Trang chủ</router-link></li>
+          <li class="nav-item"><router-link to="/introduction" class="nav-link text-white">Giới thiệu</router-link></li>
+          <li class="nav-item"><router-link to="/books" class="nav-link text-white">Kho sách</router-link></li>
+          <li class="nav-item"><router-link to="/su-kien" class="nav-link text-white">Sự kiện</router-link></li>
+          <li class="nav-item"><router-link to="/lien-he" class="nav-link text-white">Liên hệ</router-link></li>
         </ul>
 
-        <!-- Phần đăng nhập -->
         <div class="d-flex align-items-center gap-2">
           <template v-if="user">
-            <router-link :to="'/profile'" class="d-flex align-items-center text-white text-decoration-none gap-2">
-              <img
-                :src="getAvatarUrl(user.avatar)"
-                alt="Avatar"
-                class="rounded-circle"
-                width="32"
-                height="32"
-                style="object-fit: cover"
-              />
+            <router-link to="/profile" class="d-flex align-items-center text-white text-decoration-none gap-2">
+              <img :src="getAvatarUrl(user.avatar)" alt="Avatar" class="rounded-circle" width="32" height="32" />
               <span>{{ user.name }}</span>
             </router-link>
-            <button class="btn btn-secondary text-white" @click="logout"><font-awesome-icon icon="fa-solid fa-right-from-bracket" />Logout</button>
+            <button class="btn btn-secondary text-white" @click="logout">
+              <font-awesome-icon icon="fa-solid fa-right-from-bracket" /> Logout
+            </button>
           </template>
           <template v-else>
             <router-link to="/login" class="btn btn-light">
@@ -62,49 +46,33 @@
   </header>
 </template>
 
-<script>
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import api from "@/services/api.service";
+<script setup>
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+import AuthService from '@/services/auth.service'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
-export default {
-  components: { FontAwesomeIcon },
-  data() {
-    return {
-      user: null,
-    };
-  },
-  async mounted() {
-    try {
-      const res = await api.get("/auth/me");
-      this.user = res.data;
-    } catch (err) {
-      console.warn("Người dùng chưa đăng nhập.");
-    }
-  },
-  methods: {
-    logout() {
-      localStorage.removeItem("user");
-      api.post("/auth/logout")
-        .then(() => {
-          this.user = null;
-          this.$router.push("/login");
-        })
-        .catch(() => {
-          alert("Đăng xuất thất bại");
-        });
-    },
-    getAvatarUrl(avatarPath) {
-      if (!avatarPath) return "/images/default-avatar.jpg";
+const router = useRouter()
+const userStore = useUserStore()
+const user = userStore.user
 
-      // Nếu là URL đầy đủ (bắt đầu bằng http hoặc https), trả nguyên URL
-      if (/^https?:\/\//.test(avatarPath)) {
-        return avatarPath;
-      }
+function getAvatarUrl(path) {
+  if (!path) return "/images/default-avatar.jpg"
+  return /^https?:\/\//.test(path) ? path : `http://localhost:3000${path}`
+}
 
-      // Ngược lại, coi như đường dẫn nội bộ
-      return `http://localhost:3000${avatarPath}`;
-    }
-  }
-};
+async function logout() {
+  await AuthService.logout()
+  userStore.clearUser()
+  localStorage.removeItem("user")
+  router.push('/login')
+}
 </script>
 
+<script>
+export default {
+  components: {
+    FontAwesomeIcon
+  }
+}
+</script>

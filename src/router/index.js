@@ -6,15 +6,30 @@ import Profile from "@/views/Profile.vue";
 import Auth from "@/views/Auth.vue";
 import DashBoard from "@/views/DashBoard.vue";
 import Introduction from "@/views/Introduction.vue";
+import BookStore from "@/views/BookStore.vue";
 const routes = [
   { path: "/", name: "home", component: Home },
   { path: "/books/:id", name: "BookDetail", component: BookDetail },
-  { path: "/login/success", component: LoginSuccess },
-  { path: "/login", name: "Login", component: Auth },
-  { path: "/profile", name: "Profile", component: Profile },
-  { path: "/register", name: "Register", component: Auth },
-  { path: "/dashboard", name: "DashBoard", component: DashBoard },
-  { path: "/introduction", name: "Introduction", component: Introduction },
+  { path: "/books", name: "BookStore", component: BookStore },
+
+  { path: "/profile", name: "Profile", component: Profile }, // vẫn có header/footer
+  { path: "/introduction", name: "Introduction", component: Introduction }, // vẫn có
+
+  // Không có header/footer:
+  { path: "/login", name: "Login", component: Auth, meta: { layout: "none" } },
+  {
+    path: "/register",
+    name: "Register",
+    component: Auth,
+    meta: { layout: "none" },
+  },
+  {
+    path: "/dashboard",
+    name: "DashBoard",
+    component: DashBoard,
+    meta: { layout: "none" },
+  },
+  { path: "/login/success", component: LoginSuccess, meta: { layout: "none" } },
 ];
 
 const router = createRouter({
