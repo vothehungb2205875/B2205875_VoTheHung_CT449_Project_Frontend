@@ -1,10 +1,10 @@
 import { createApp } from "vue";
-import { createPinia } from "pinia";
 import App from "./App.vue";
 import router from "./router";
 
 /* Bootstrap */
 import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js"; // bundle đã bao gồm Popper v2
 
 /* Font Awesome (Vue-style) */
 import { library } from "@fortawesome/fontawesome-svg-core";
@@ -40,6 +40,6 @@ library.add(
 
 /* Tạo app */
 const app = createApp(App);
-app.use(createPinia());
+
 app.component("font-awesome-icon", FontAwesomeIcon);
 app.use(router).mount("#app");

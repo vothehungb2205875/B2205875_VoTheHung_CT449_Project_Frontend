@@ -10,7 +10,13 @@ class AuthService {
   }
 
   async register(data) {
-    return (await this.api.post("/register", data)).data;
+    return (
+      await this.api.post("/register", data, {
+        headers: {
+          "Content-Type": "multipart/form-data", // Bắt buộc khi gửi ảnh
+        },
+      })
+    ).data;
   }
 
   async logout() {

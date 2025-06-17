@@ -1,6 +1,5 @@
 <template>
   <div class="page-layout">
-
     <main class="flex-fill py-5">
       <div class="container">
         <h2 class="mb-4 fw-bold text-center">👤 Thông tin cá nhân</h2>
@@ -11,14 +10,10 @@
         </div>
 
         <template v-else>
-          <div
-            v-if="userStore.reader && !editing"
-            class="card shadow-sm p-4 mx-auto"
-            style="max-width: 700px"
-          >
+          <div v-if="user && !editing" class="card shadow-sm p-4 mx-auto" style="max-width: 700px">
             <div class="d-flex align-items-center gap-4 mb-4">
               <img
-                :src="getAvatarUrl(userStore.reader.avatar)"
+                :src="getAvatarUrl(user.avatar)"
                 alt="Avatar"
                 class="rounded-circle border"
                 width="100"
@@ -27,18 +22,18 @@
                 @error="handleImageError"
               />
               <div>
-                <h4 class="mb-1">{{ userStore.reader.name }}</h4>
-                <p class="text-muted mb-0">{{ userStore.reader.email }}</p>
+                <h4 class="mb-1">{{ user.name }}</h4>
+                <p class="text-muted mb-0">{{ user.email }}</p>
               </div>
             </div>
 
             <div class="mb-3">
-              <p><strong>Mã độc giả:</strong> {{ userStore.reader.MaDocGia || "Chưa có" }}</p>
-              <p><strong>Họ tên:</strong> {{ userStore.reader.HoLot }} {{ userStore.reader.Ten }}</p>
-              <p><strong>Ngày sinh:</strong> {{ userStore.reader.NgaySinh || "Chưa cập nhật" }}</p>
-              <p><strong>Phái:</strong> {{ userStore.reader.Phai }}</p>
-              <p><strong>Địa chỉ:</strong> {{ userStore.reader.DiaChi }}</p>
-              <p><strong>Điện thoại:</strong> {{ userStore.reader.DienThoai }}</p>
+              <p><strong>Mã độc giả:</strong> {{ user.MaDocGia || "Chưa có" }}</p>
+              <p><strong>Họ tên:</strong> {{ user.HoLot }} {{ user.Ten }}</p>
+              <p><strong>Ngày sinh:</strong> {{ user.NgaySinh || "Chưa cập nhật" }}</p>
+              <p><strong>Phái:</strong> {{ user.Phai }}</p>
+              <p><strong>Địa chỉ:</strong> {{ user.DiaChi }}</p>
+              <p><strong>Điện thoại:</strong> {{ user.DienThoai }}</p>
             </div>
 
             <button class="btn btn-outline-primary w-100" @click="editing = true">
@@ -47,11 +42,7 @@
           </div>
 
           <!-- Form chỉnh sửa -->
-          <div
-            v-else-if="editing"
-            class="card shadow-sm p-4 mx-auto"
-            style="max-width: 700px"
-          >
+          <div v-else-if="editing" class="card shadow-sm p-4 mx-auto" style="max-width: 700px">
             <h5 class="mb-3">Cập nhật thông tin cá nhân</h5>
             <form @submit.prevent="updateProfile">
               <div class="mb-3" v-for="(label, key) in fields" :key="key">
@@ -82,20 +73,21 @@
         </template>
       </div>
     </main>
-
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { useUserStore } from "@/stores/user";
+import { useRouter } from "vue-router";
 import ReaderService from "@/services/reader.service";
 
-const userStore = useUserStore();
+const router = useRouter();
 
 const loading = ref(true);
 const editing = ref(false);
+const user = ref(null);
 const editData = ref({});
+
 const fields = {
   HoLot: "Họ lót",
   Ten: "Tên",
@@ -109,9 +101,17 @@ const fields = {
 
 onMounted(async () => {
   try {
-    if (!userStore.user) await userStore.fetchUser();
-    if (!userStore.reader) await userStore.fetchReader();
-    if (userStore.reader) editData.value = { ...userStore.reader };
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) {
+      router.push("/login");
+      return;
+    }
+
+    const parsedUser = JSON.parse(storedUser);
+    const res = await ReaderService.getReaderById(parsedUser._id); // gọi API để lấy bản đầy đủ
+
+    user.value = res.document || res; // tuỳ theo backend trả về
+    editData.value = { ...user.value };
   } catch (err) {
     console.error("Không thể lấy thông tin người dùng:", err);
   } finally {
@@ -120,18 +120,19 @@ onMounted(async () => {
 });
 
 function getAvatarUrl(path) {
-  if (!path) return "/images/default-avatar.jpg";
+  if (!path) return "/uploads/default.jpg";
   return /^https?:\/\//.test(path) ? path : `http://localhost:3000${path}`;
 }
 
 function handleImageError(e) {
-  e.target.src = "/images/default-avatar.jpg";
+  e.target.src = "/uploads/default.jpg";
 }
 
 async function updateProfile() {
   try {
-    const res = await ReaderService.updateReader(userStore.reader._id, editData.value);
-    userStore.reader = res.document;
+    const res = await ReaderService.updateReader(user.value._id, editData.value);
+    user.value = res.document;
+    localStorage.setItem("user", JSON.stringify(user.value));
     editing.value = false;
     alert("Cập nhật thành công!");
   } catch (err) {
@@ -147,6 +148,7 @@ async function updateProfile() {
   flex-direction: column;
   min-height: 100vh;
 }
+
 main {
   flex: 1;
   background-color: #f8f9fa;

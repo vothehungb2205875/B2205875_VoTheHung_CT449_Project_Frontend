@@ -32,6 +32,10 @@ class BookService {
   async getTopViewed() {
     return (await this.api.get("/top")).data;
   }
+
+  async getFiltered(params) {
+    return (await this.api.get("/", { params })).data;
+  }
 }
 
 export default new BookService();

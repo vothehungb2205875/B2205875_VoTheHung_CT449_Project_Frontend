@@ -3,7 +3,12 @@
     <HeaderComponent v-if="showLayout" />
     
     <main class="content">
-      <router-view />
+      <transition name="fade" mode="out-in">
+        <router-view />
+      </transition>
+
+      <MessengerButton />
+      <GoTop />
     </main>
 
     <FooterComponent v-if="showLayout" />
@@ -13,6 +18,8 @@
 <script>
 import HeaderComponent from './components/Header.vue'
 import FooterComponent from './components/Footer.vue'
+import MessengerButton from './components/MessengerButton.vue';
+import GoTop from './components/GoTop.vue';    
 
 export default {
   computed: {
@@ -22,12 +29,20 @@ export default {
   },
   components: {
     HeaderComponent,
-    FooterComponent
+    FooterComponent,
+    MessengerButton,
+    GoTop,
   }
 }
 </script>
 
 <style>
+
+body, html {
+  overflow-x: hidden; /* Ẩn thanh cuộn ngang */
+  overflow-y: scroll;
+}
+
 #app {
   display: flex;
   flex-direction: column;
@@ -38,4 +53,12 @@ export default {
   flex: 1; /* Đẩy footer xuống dưới */
   padding-bottom: 1rem; /* Nếu cần khoảng cách nhỏ với footer */
 }
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
 </style>

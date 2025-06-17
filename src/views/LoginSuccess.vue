@@ -16,7 +16,6 @@
 
 <script>
 import AuthService from "@/services/auth.service";
-import { useUserStore } from "@/stores/user"; // ✅ import Pinia store
 
 export default {
   data() {
@@ -26,22 +25,16 @@ export default {
     };
   },
   async mounted() {
-    const userStore = useUserStore(); // ✅ lấy instance store
-
     try {
       const existingUser = localStorage.getItem("user");
       if (existingUser) {
-        userStore.setUser(JSON.parse(existingUser)); // vẫn sync vào store nếu đã lưu trước
         this.$router.push("/");
         return;
       }
 
       const user = await AuthService.getCurrentUser();
-      
-      // ✅ Lưu vào Pinia store
-      userStore.setUser(user);
 
-      // (tùy chọn) Lưu vào localStorage nếu muốn reload vẫn giữ user
+      // Lưu vào localStorage nếu cần giữ trạng thái đăng nhập
       localStorage.setItem("user", JSON.stringify(user));
 
       this.$router.push("/");

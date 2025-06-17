@@ -17,23 +17,54 @@
 
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
-          <li class="nav-item"><router-link to="/" class="nav-link text-white">Trang chủ</router-link></li>
-          <li class="nav-item"><router-link to="/introduction" class="nav-link text-white">Giới thiệu</router-link></li>
-          <li class="nav-item"><router-link to="/books" class="nav-link text-white">Kho sách</router-link></li>
-          <li class="nav-item"><router-link to="/su-kien" class="nav-link text-white">Sự kiện</router-link></li>
-          <li class="nav-item"><router-link to="/lien-he" class="nav-link text-white">Liên hệ</router-link></li>
+          <li class="nav-item">
+            <router-link to="/" class="nav-link text-white">Trang chủ</router-link>
+          </li>
+          <li class="nav-item">
+            <router-link to="/introduction" class="nav-link text-white">Giới thiệu</router-link>
+          </li>
+          <li class="nav-item">
+            <router-link to="/books" class="nav-link text-white">Kho sách</router-link>
+          </li>
+          <li class="nav-item">
+            <router-link to="/su-kien" class="nav-link text-white">Sự kiện</router-link>
+          </li>
+          <li class="nav-item">
+            <router-link to="/lien-he" class="nav-link text-white">Liên hệ</router-link>
+          </li>
         </ul>
 
         <div class="d-flex align-items-center gap-2">
           <template v-if="user">
-            <router-link to="/profile" class="d-flex align-items-center text-white text-decoration-none gap-2">
-              <img :src="getAvatarUrl(user.avatar)" alt="Avatar" class="rounded-circle" width="32" height="32" />
-              <span>{{ user.name }}</span>
-            </router-link>
-            <button class="btn btn-secondary text-white" @click="logout">
-              <font-awesome-icon icon="fa-solid fa-right-from-bracket" /> Logout
-            </button>
+            <div class="dropdown">
+              <button
+                class="btn dropdown-toggle d-flex align-items-center gap-2 text-white"
+                type="button"
+                id="userDropdown"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <img
+                  :src="getAvatarUrl(user.avatar)"
+                  alt="Avatar"
+                  class="rounded-circle"
+                  width="32"
+                  height="32"
+                />
+                <span>{{ user.name }}</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li>
+                  <router-link class="dropdown-item" to="/profile">Thông tin cá nhân</router-link>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <a class="dropdown-item" href="#" @click.prevent="logout">Đăng xuất</a>
+                </li>
+              </ul>
+            </div>
           </template>
+
           <template v-else>
             <router-link to="/login" class="btn btn-light">
               <font-awesome-icon icon="fa-solid fa-right-to-bracket" />
@@ -47,24 +78,30 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
 import AuthService from '@/services/auth.service'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const router = useRouter()
-const userStore = useUserStore()
-const user = userStore.user
+const user = ref(null)
+
+onMounted(() => {
+  const storedUser = localStorage.getItem('user')
+  if (storedUser) {
+    user.value = JSON.parse(storedUser)
+  }
+})
 
 function getAvatarUrl(path) {
-  if (!path) return "/images/default-avatar.jpg"
+  if (!path) return "http://localhost:3000/uploads/avatars/default.jpg"
   return /^https?:\/\//.test(path) ? path : `http://localhost:3000${path}`
 }
 
 async function logout() {
   await AuthService.logout()
-  userStore.clearUser()
-  localStorage.removeItem("user")
+  localStorage.removeItem('user')
+  user.value = null
   router.push('/login')
 }
 </script>

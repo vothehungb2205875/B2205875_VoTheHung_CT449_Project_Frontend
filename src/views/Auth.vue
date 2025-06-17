@@ -14,7 +14,7 @@
           </form>
   
           <form v-else @submit.prevent="handleRegister" enctype="multipart/form-data">
-            <input type="file" class="form-control mb-3" @change="handleAvatarChange" accept="image/*" />
+            <input type="file" name="avatar" class="form-control mb-3" @change="handleAvatarChange" accept="image/*" />
             <input v-model="form.HoLot" type="text" class="form-control mb-3" placeholder="Họ lót" required />
             <input v-model="form.Ten" type="text" class="form-control mb-3" placeholder="Tên" required />
             <input v-model="form.email" type="email" class="form-control mb-3" placeholder="Email" required />
@@ -105,7 +105,9 @@
       },
   
       handleAvatarChange(event) {
-        this.avatar = event.target.files[0];
+        const file = event.target.files[0];
+        console.log("Chọn avatar:", file?.name); // để kiểm tra trong console
+        this.avatar = file;
       },
   
       async handleRegister() {
@@ -120,7 +122,7 @@
             formData.append(key, this.form[key]);
           }
           if (this.avatar) {
-            formData.append("avatar", this.avatar);
+            formData.append("avatar", this.avatar ?? "");
           }
   
           await AuthService.register(formData);
