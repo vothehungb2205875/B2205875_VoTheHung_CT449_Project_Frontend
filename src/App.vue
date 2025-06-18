@@ -38,11 +38,6 @@ export default {
 
 <style>
 
-body, html {
-  overflow-x: hidden; /* Ẩn thanh cuộn ngang */
-  overflow-y: scroll;
-}
-
 #app {
   display: flex;
   flex-direction: column;
@@ -51,7 +46,6 @@ body, html {
 
 .content {
   flex: 1; /* Đẩy footer xuống dưới */
-  padding-bottom: 1rem; /* Nếu cần khoảng cách nhỏ với footer */
 }
 
 .fade-enter-active, .fade-leave-active {

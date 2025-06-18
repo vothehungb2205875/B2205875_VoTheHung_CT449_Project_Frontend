@@ -9,7 +9,9 @@ class BorrowService {
     return (await this.api.post("/", data)).data;
   }
 
-  // Có thể thêm các hàm khác như getAll, getByUser, v.v.
+  async history(maDocGia) {
+    return (await this.api.get(`/history/${maDocGia}`)).data;
+  }
 }
 
 export default new BorrowService();

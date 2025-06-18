@@ -73,7 +73,7 @@ const startDate = ref('')
 const endDate = ref('')
 const agreed = ref(false)
 
-// Lấy thông tin user từ localStorage thay vì Pinia
+// Lấy thông tin user từ localStorage
 const user = ref(null)
 onMounted(() => {
   const storedUser = localStorage.getItem('user')
@@ -118,7 +118,6 @@ const handleBorrow = async () => {
       alert("Không xác định được thông tin người dùng.")
       return
     }
-    const id = route.params.id;
 
     await BorrowService.create({
       MaSach: book.value.MaSach,
@@ -130,11 +129,19 @@ const handleBorrow = async () => {
     alert("Mượn sách thành công")
     book.value = await BookService.get(route.params.id)
     showForm.value = false
+
   } catch (err) {
-    console.error(err)
-    alert("Lỗi khi mượn sách")
+    // Đọc lỗi từ BE trả về
+    const message = err.response?.data?.message || "Lỗi khi mượn sách"
+    alert(message)
+
+    // Optional: nếu lỗi là thiếu thông tin thì có thể điều hướng
+    if (message.includes("Vui lòng cập nhật thông tin độc giả trước khi mượn sách")) {
+      router.push("/profile")
+    }
   }
 }
+
 </script>
 
 

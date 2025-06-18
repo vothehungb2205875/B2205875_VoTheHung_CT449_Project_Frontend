@@ -10,38 +10,12 @@
         </div>
 
         <template v-else>
-          <div v-if="user && !editing" class="card shadow-sm p-4 mx-auto" style="max-width: 700px">
-            <div class="d-flex align-items-center gap-4 mb-4">
-              <img
-                :src="getAvatarUrl(user.avatar)"
-                alt="Avatar"
-                class="rounded-circle border"
-                width="100"
-                height="100"
-                style="object-fit: cover"
-                @error="handleImageError"
-              />
-              <div>
-                <h4 class="mb-1">{{ user.name }}</h4>
-                <p class="text-muted mb-0">{{ user.email }}</p>
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <p><strong>Mã độc giả:</strong> {{ user.MaDocGia || "Chưa có" }}</p>
-              <p><strong>Họ tên:</strong> {{ user.HoLot }} {{ user.Ten }}</p>
-              <p><strong>Ngày sinh:</strong> {{ user.NgaySinh || "Chưa cập nhật" }}</p>
-              <p><strong>Phái:</strong> {{ user.Phai }}</p>
-              <p><strong>Địa chỉ:</strong> {{ user.DiaChi }}</p>
-              <p><strong>Điện thoại:</strong> {{ user.DienThoai }}</p>
-            </div>
-
-            <button class="btn btn-outline-primary w-100" @click="editing = true">
-              ✏️ Cập nhật hồ sơ
-            </button>
+          <!-- Không tìm thấy user -->
+          <div v-if="!user" class="alert alert-warning text-center">
+            Không thể tải thông tin người dùng. Vui lòng đăng nhập lại.
           </div>
 
-          <!-- Form chỉnh sửa -->
+          <!-- Đang chỉnh sửa -->
           <div v-else-if="editing" class="card shadow-sm p-4 mx-auto" style="max-width: 700px">
             <h5 class="mb-3">Cập nhật thông tin cá nhân</h5>
             <form @submit.prevent="updateProfile">
@@ -67,8 +41,71 @@
             </form>
           </div>
 
-          <div v-else class="alert alert-warning text-center">
-            Không thể tải thông tin người dùng. Vui lòng đăng nhập lại.
+          <!-- Giao diện 2 cột -->
+          <div v-else class="row g-4">
+            <!-- Cột trái: Thông tin -->
+            <div class="col-md-6">
+              <div class="card shadow-sm p-4 h-100">
+                <div class="d-flex align-items-center gap-4 mb-4">
+                  <img
+                    :src="getAvatarUrl(user.avatar)"
+                    alt="Avatar"
+                    class="rounded-circle border"
+                    width="100"
+                    height="100"
+                    style="object-fit: cover"
+                    @error="handleImageError"
+                  />
+                  <div>
+                    <h4 class="mb-1">{{ user.name }}</h4>
+                    <p class="text-muted mb-0">{{ user.email }}</p>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <p><strong>Họ tên:</strong> {{ user.HoLot }} {{ user.Ten }}</p>
+                  <p><strong>Ngày sinh:</strong> {{ user.NgaySinh || "Chưa cập nhật" }}</p>
+                  <p><strong>Giới tính:</strong> {{ user.Phai }}</p>
+                  <p><strong>Địa chỉ:</strong> {{ user.DiaChi }}</p>
+                  <p><strong>Điện thoại:</strong> {{ user.DienThoai }}</p>
+                </div>
+
+                <button class="btn btn-outline-primary w-100" @click="editing = true">
+                  ✏️ Cập nhật hồ sơ
+                </button>
+              </div>
+            </div>
+
+            <!-- Cột phải: Lịch sử mượn sách -->
+            <div class="col-md-6">
+              <div class="card shadow-sm p-4 h-100 d-flex flex-column">
+                <button class="btn btn-outline-success w-100 mb-3" @click="showHistory = !showHistory">
+                  📚 {{ showHistory ? 'Ẩn' : 'Xem' }} lịch sử mượn sách
+                </button>
+
+                <div v-if="showHistory" class="borrow-history-scroll flex-grow-1">
+                  <div v-if="borrowHistory.length">
+                    <ul class="list-group">
+                      <li
+                        v-for="item in borrowHistory"
+                        :key="item._id"
+                        class="list-group-item d-flex justify-content-between align-items-center"
+                      >
+                        <div>
+                          <strong>{{ item.bookTitle || 'Không rõ' }}</strong><br />
+                          <small>Mượn ngày: {{ formatDate(item.NgayMuon) }}</small><br />
+                          <small>Hạn trả: {{ formatDate(item.NgayTra) }}</small>
+                        </div>
+                        <span class="badge bg-secondary">
+                          {{ item.TrangThai || (item.NgayTra ? "Đã trả" : "Chưa trả") }}
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div v-else class="text-muted">Không có lịch sử mượn sách.</div>
+                </div>
+              </div>
+            </div>
           </div>
         </template>
       </div>
@@ -80,6 +117,8 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import ReaderService from "@/services/reader.service";
+import authService from "@/services/auth.service";
+import BorrowService from "@/services/borrow.service";
 
 const router = useRouter();
 
@@ -87,6 +126,8 @@ const loading = ref(true);
 const editing = ref(false);
 const user = ref(null);
 const editData = ref({});
+const showHistory = ref(false);
+const borrowHistory = ref([]);
 
 const fields = {
   HoLot: "Họ lót",
@@ -107,11 +148,12 @@ onMounted(async () => {
       return;
     }
 
-    const parsedUser = JSON.parse(storedUser);
-    const res = await ReaderService.getReaderById(parsedUser._id); // gọi API để lấy bản đầy đủ
-
-    user.value = res.document || res; // tuỳ theo backend trả về
+    const res = await authService.getCurrentUser();
+    user.value = await ReaderService.getReaderById(res._id);
     editData.value = { ...user.value };
+
+    // Lấy lịch sử mượn (đã bao gồm tên sách từ backend)
+    borrowHistory.value = await BorrowService.history(user.value.MaDocGia);
   } catch (err) {
     console.error("Không thể lấy thông tin người dùng:", err);
   } finally {
@@ -126,6 +168,12 @@ function getAvatarUrl(path) {
 
 function handleImageError(e) {
   e.target.src = "/uploads/default.jpg";
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return "Chưa có";
+  const date = new Date(dateStr);
+  return !isNaN(date) ? date.toLocaleDateString("vi-VN") : "Không hợp lệ";
 }
 
 async function updateProfile() {
@@ -152,5 +200,19 @@ async function updateProfile() {
 main {
   flex: 1;
   background-color: #f8f9fa;
+}
+
+.borrow-history-scroll {
+  max-height: 320px; /* tương đương 5 item */
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.borrow-history-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.borrow-history-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
 }
 </style>

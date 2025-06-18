@@ -137,7 +137,7 @@ main {
 /* Sticky side columns */
 .col-md-2 {
   position: sticky;
-  top: 0px;
+  top: 50px;
   align-self: flex-start;
   height: fit-content;
 }

@@ -81,16 +81,15 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AuthService from '@/services/auth.service'
+import ReaderService from "@/services/reader.service";
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const router = useRouter()
 const user = ref(null)
 
-onMounted(() => {
-  const storedUser = localStorage.getItem('user')
-  if (storedUser) {
-    user.value = JSON.parse(storedUser)
-  }
+onMounted(async() => {
+  const res = await AuthService.getCurrentUser();
+  user.value = await ReaderService.getReaderById(res._id);
 })
 
 function getAvatarUrl(path) {
@@ -113,3 +112,11 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+</style>

@@ -190,7 +190,7 @@
   
   .col-md-2 {
     position: sticky;
-    top: 0;
+    top: 80px;
     align-self: flex-start;
     height: fit-content;
   }
