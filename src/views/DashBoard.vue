@@ -16,7 +16,7 @@
     <!-- Nội dung -->
     <main class="content">
       <div class="container">
-        <div class="row d-flex justify-content-center mb-4">
+        <div class="row d-flex justify-content-center">
           <img src="/images/banner.png" style="max-width: 200px;" />
         </div>
 

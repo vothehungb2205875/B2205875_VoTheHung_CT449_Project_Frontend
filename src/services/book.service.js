@@ -10,7 +10,13 @@ class BookService {
   }
 
   async create(data) {
-    return (await this.api.post("/", data)).data;
+    return (
+      await this.api.post("/", data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+    ).data;
   }
 
   async deleteAll() {
@@ -22,7 +28,17 @@ class BookService {
   }
 
   async update(id, data) {
-    return (await this.api.put(`/${id}`, data)).data;
+    if (data instanceof FormData) {
+      return (
+        await this.api.put(`/${id}`, data, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        })
+      ).data;
+    } else {
+      return (await this.api.put(`/${id}`, data)).data;
+    }
   }
 
   async delete(id) {
