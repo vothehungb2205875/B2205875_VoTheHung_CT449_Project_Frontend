@@ -1,6 +1,6 @@
 <template>
   <div class="container py-4">
-    <h4>📚 Quản lý Sách</h4>
+    <h4>Quản lý Sách</h4>
 
     <!-- Tìm kiếm -->
     <input
@@ -11,7 +11,7 @@
     />
 
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <button class="btn btn-primary" @click="addBook">➕ Thêm sách</button>
+      <button class="btn btn-primary" @click="addBook">Thêm sách</button>
 
       <div class="d-flex align-items-center gap-2">
         <label class="mb-0">Số dòng/trang:</label>

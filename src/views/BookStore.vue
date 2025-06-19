@@ -104,7 +104,7 @@
   
   const searchQuery = ref(route.query.q || '')
   const selectedGenre = ref(route.query.genre || '')
-  const genres = ['Công nghệ thông tin', 'Luật', 'Kinh tế', 'Kỹ thuật']
+  const genres = ['Công nghệ thông tin', 'Luật', 'Kinh tế', 'Kỹ thuật', 'Nông nghiệp, thủy sản']
   
   const books = ref([])
   const currentPage = ref(1)

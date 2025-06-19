@@ -2,7 +2,7 @@
   <div class="page-layout">
     <main class="flex-fill py-5">
       <div class="container">
-        <h2 class="mb-4 fw-bold text-center">👤 Thông tin cá nhân</h2>
+        <h2 class="mb-4 fw-bold text-center">Thông tin cá nhân</h2>
 
         <div v-if="loading" class="text-center py-5">
           <div class="spinner-border text-primary" role="status"></div>
@@ -35,8 +35,8 @@
               </div>
 
               <div class="d-flex justify-content-between">
-                <button type="submit" class="btn btn-success">💾 Lưu thay đổi</button>
-                <button type="button" class="btn btn-secondary" @click="editing = false">❌ Hủy</button>
+                <button type="submit" class="btn btn-success">Lưu thay đổi</button>
+                <button type="button" class="btn btn-secondary" @click="editing = false">Hủy</button>
               </div>
             </form>
           </div>
@@ -71,7 +71,7 @@
                 </div>
 
                 <button class="btn btn-outline-primary w-100" @click="editing = true">
-                  ✏️ Cập nhật hồ sơ
+                  Cập nhật hồ sơ
                 </button>
               </div>
             </div>
@@ -80,7 +80,7 @@
             <div class="col-md-6">
               <div class="card shadow-sm p-4 h-100 d-flex flex-column">
                 <button class="btn btn-outline-success w-100 mb-3" @click="showHistory = !showHistory">
-                  📚 {{ showHistory ? 'Ẩn' : 'Xem' }} lịch sử mượn sách
+                   {{ showHistory ? 'Ẩn' : 'Xem' }} lịch sử mượn sách
                 </button>
 
                 <div v-if="showHistory" class="borrow-history-scroll flex-grow-1">

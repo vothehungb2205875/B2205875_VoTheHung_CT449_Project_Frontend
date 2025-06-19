@@ -4,7 +4,7 @@
       <div class="modal-content">
         <form @submit.prevent="submit">
           <div class="modal-header">
-            <h5 class="modal-title">{{ isEditMode ? '✏️ Chỉnh sửa sách' : '➕ Thêm sách' }}</h5>
+            <h5 class="modal-title">{{ isEditMode ? 'Chỉnh sửa sách' : 'Thêm sách' }}</h5>
             <button type="button" class="btn-close" @click="closeDialog"></button>
           </div>
 
@@ -32,6 +32,7 @@
                   <option>Luật</option>
                   <option>Kinh tế</option>
                   <option>Kỹ thuật</option>
+                  <option>Nông nghiệp, thủy sản</option>
                 </select>
               </div>
 
@@ -91,7 +92,7 @@ const props = defineProps({
   book: Object,
   mode: String
 })
-const emit = defineEmits(['update:modelValue', 'save'])
+const emit = defineEmits(['update:modelValue', 'save']) // emit để gửi sự kiện từ component con tới cha
 
 const formData = ref({})
 const previewImage = ref(null)
