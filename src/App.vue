@@ -3,9 +3,11 @@
     <HeaderComponent v-if="showLayout" />
 
     <main class="content">
-      <transition name="fade" mode="out-in">
-        <router-view />
-      </transition>
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" class="page-wrapper" v-if="Component" />
+        </transition>
+      </router-view>
 
       <MessengerButton v-if="showFloatingButtons" />
       <GoTop v-if="showFloatingButtons" />
@@ -27,27 +29,31 @@ import GoTop from './components/GoTop.vue';
 const route = useRoute();
 
 const showLayout = computed(() => route.meta.layout !== 'none');
-
 const showFloatingButtons = computed(() => route.path !== '/dashboard');
 </script>
 
 <style>
-
 #app {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* Đảm bảo luôn cao bằng viewport */
+  min-height: 100vh;
 }
 
 .content {
-  flex: 1; /* Đẩy footer xuống dưới */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.page-wrapper {
+  flex: 1;
 }
 
 .fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s ease;
 }
 .fade-enter-from, .fade-leave-to {
   opacity: 0;
 }
-
 </style>

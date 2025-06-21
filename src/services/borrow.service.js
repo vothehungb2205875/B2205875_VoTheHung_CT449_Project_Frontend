@@ -12,6 +12,20 @@ class BorrowService {
   async history(maDocGia) {
     return (await this.api.get(`/history/${maDocGia}`)).data;
   }
+
+  async getAll() {
+    return (await this.api.get("/")).data;
+  }
+
+  async markAsReturned(id) {
+    const payload = { TrangThai: "Đã trả" };
+    return await this.api.put(`/${id}`, payload);
+  }
+
+  async cancelBorrow(id) {
+    const payload = { TrangThai: "Đã hủy" };
+    return await this.api.put(`/${id}`, payload);
+  }
 }
 
 export default new BorrowService();

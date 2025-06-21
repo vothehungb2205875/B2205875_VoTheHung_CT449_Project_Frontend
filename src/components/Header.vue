@@ -105,14 +105,6 @@ async function logout() {
 }
 </script>
 
-<script>
-export default {
-  components: {
-    FontAwesomeIcon
-  }
-}
-</script>
-
 <style scoped>
 header {
   position: sticky;

@@ -10,12 +10,10 @@
         </div>
 
         <template v-else>
-          <!-- Không tìm thấy user -->
           <div v-if="!user" class="alert alert-warning text-center">
             Không thể tải thông tin người dùng. Vui lòng đăng nhập lại.
           </div>
 
-          <!-- Đang chỉnh sửa -->
           <div v-else-if="editing" class="card shadow-sm p-4 mx-auto" style="max-width: 700px">
             <h5 class="mb-3">Cập nhật thông tin cá nhân</h5>
             <form @submit.prevent="updateProfile">
@@ -41,9 +39,8 @@
             </form>
           </div>
 
-          <!-- Giao diện 2 cột -->
           <div v-else class="row g-4">
-            <!-- Cột trái: Thông tin -->
+            <!-- Thông tin cá nhân -->
             <div class="col-md-6">
               <div class="card shadow-sm p-4 h-100">
                 <div class="d-flex align-items-center gap-4 mb-4">
@@ -64,7 +61,7 @@
 
                 <div class="mb-3">
                   <p><strong>Họ tên:</strong> {{ user.HoLot }} {{ user.Ten }}</p>
-                  <p><strong>Ngày sinh:</strong> {{ user.NgaySinh || "Chưa cập nhật" }}</p>
+                  <p><strong>Ngày sinh:</strong> {{ formatDate(user.NgaySinh) }}</p>
                   <p><strong>Giới tính:</strong> {{ user.Phai }}</p>
                   <p><strong>Địa chỉ:</strong> {{ user.DiaChi }}</p>
                   <p><strong>Điện thoại:</strong> {{ user.DienThoai }}</p>
@@ -76,11 +73,11 @@
               </div>
             </div>
 
-            <!-- Cột phải: Lịch sử mượn sách -->
+            <!-- Lịch sử mượn -->
             <div class="col-md-6">
               <div class="card shadow-sm p-4 h-100 d-flex flex-column">
                 <button class="btn btn-outline-success w-100 mb-3" @click="showHistory = !showHistory">
-                   {{ showHistory ? 'Ẩn' : 'Xem' }} lịch sử mượn sách
+                  {{ showHistory ? 'Ẩn' : 'Xem' }} lịch sử mượn sách
                 </button>
 
                 <div v-if="showHistory" class="borrow-history-scroll flex-grow-1">
@@ -89,16 +86,31 @@
                       <li
                         v-for="item in borrowHistory"
                         :key="item._id"
-                        class="list-group-item d-flex justify-content-between align-items-center"
+                        class="list-group-item d-flex justify-content-between align-items-start"
                       >
                         <div>
                           <strong>{{ item.bookTitle || 'Không rõ' }}</strong><br />
                           <small>Mượn ngày: {{ formatDate(item.NgayMuon) }}</small><br />
                           <small>Hạn trả: {{ formatDate(item.NgayTra) }}</small>
                         </div>
-                        <span class="badge bg-secondary">
-                          {{ item.TrangThai || (item.NgayTra ? "Đã trả" : "Chưa trả") }}
-                        </span>
+                        <div class="text-end">
+                          <span
+                            :class="[
+                              statusClass(item),
+                              isOverdue(item) ? 'blinking' : ''
+                            ]"
+                            class="mb-2 d-inline-block"
+                          >
+                            {{ isOverdue(item) ? 'Quá hạn' : item.TrangThai }}
+                          </span>
+                          <button
+                            v-if="item.TrangThai === 'Đang mượn' && !isOverdue(item)"
+                            @click="cancelBorrow(item)"
+                            class="btn btn-sm btn-outline-danger d-block mt-2"
+                          >
+                            Hủy
+                          </button>
+                        </div>
                       </li>
                     </ul>
                   </div>
@@ -152,7 +164,6 @@ onMounted(async () => {
     user.value = await ReaderService.getReaderById(res._id);
     editData.value = { ...user.value };
 
-    // Lấy lịch sử mượn (đã bao gồm tên sách từ backend)
     borrowHistory.value = await BorrowService.history(user.value.MaDocGia);
   } catch (err) {
     console.error("Không thể lấy thông tin người dùng:", err);
@@ -176,10 +187,49 @@ function formatDate(dateStr) {
   return !isNaN(date) ? date.toLocaleDateString("vi-VN") : "Không hợp lệ";
 }
 
+function isOverdue(item) {
+  if (item.TrangThai !== "Đang mượn" || !item.NgayTra) return false;
+  const today = new Date();
+  const due = new Date(item.NgayTra);
+  return due < today;
+}
+
+function statusClass(item) {
+  if (isOverdue(item)) return 'badge bg-danger blinking'; // Quá hạn
+  switch (item.TrangThai) {
+    case 'Chưa trả':
+      return 'badge bg-secondary';
+    case 'Đã trả':
+      return 'badge bg-success';
+    case 'Đã hủy':
+      return 'badge bg-danger';
+    case 'Đang mượn':
+      return 'badge bg-primary';
+    default:
+      return 'badge bg-secondary';
+  }
+}
+
+
+async function cancelBorrow(item) {
+  if (!confirm("Bạn chắc chắn muốn hủy lượt mượn này?")) return;
+
+  try {
+    await BorrowService.cancelBorrow(item._id);
+    item.TrangThai = "Đã hủy";
+    alert("Đã hủy lượt mượn.");
+  } catch (err) {
+    console.error("Lỗi hủy lượt mượn:", err);
+    alert("Không thể hủy lượt mượn.");
+  }
+}
+
 async function updateProfile() {
   try {
-    const res = await ReaderService.updateReader(user.value._id, editData.value);
-    user.value = res.document;
+    await ReaderService.update(user.value._id, editData.value);
+    const updatedUser = await ReaderService.getReaderById(user.value._id);
+    user.value = updatedUser;
+    editData.value = { ...updatedUser };
     localStorage.setItem("user", JSON.stringify(user.value));
     editing.value = false;
     alert("Cập nhật thành công!");
@@ -203,7 +253,7 @@ main {
 }
 
 .borrow-history-scroll {
-  max-height: 320px; /* tương đương 5 item */
+  max-height: 320px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -214,5 +264,19 @@ main {
 .borrow-history-scroll::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
+}
+
+.blinking {
+  animation: blink 1s infinite;
+  border: 1px solid red;
+  color: rgb(255, 255, 255);
+  padding: 4px 10px;
+  border-radius: 0.3rem;
+}
+
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
 }
 </style>

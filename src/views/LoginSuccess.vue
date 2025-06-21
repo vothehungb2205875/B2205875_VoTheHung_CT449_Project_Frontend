@@ -14,37 +14,32 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import AuthService from "@/services/auth.service";
 
-export default {
-  data() {
-    return {
-      loading: true,
-      error: null,
-    };
-  },
-  async mounted() {
-    try {
-      const existingUser = localStorage.getItem("user");
-      if (existingUser) {
-        this.$router.push("/");
-        return;
-      }
+const loading = ref(true);
+const error = ref(null);
+const router = useRouter();
 
-      const user = await AuthService.getCurrentUser();
-
-      // Lưu vào localStorage nếu cần giữ trạng thái đăng nhập
-      localStorage.setItem("user", JSON.stringify(user));
-
-      this.$router.push("/");
-    } catch (err) {
-      this.error = err.message || "Đã xảy ra lỗi không xác định.";
-    } finally {
-      this.loading = false;
+onMounted(async () => {
+  try {
+    const existingUser = localStorage.getItem("user");
+    if (existingUser) {
+      router.push("/");
+      return;
     }
-  },
-};
+
+    const user = await AuthService.getCurrentUser();
+    localStorage.setItem("user", JSON.stringify(user));
+    router.push("/");
+  } catch (err) {
+    error.value = err.message || "Đã xảy ra lỗi không xác định.";
+  } finally {
+    loading.value = false;
+  }
+});
 </script>
 
 <style scoped>

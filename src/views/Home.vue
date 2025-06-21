@@ -1,6 +1,5 @@
 <template>
   <div class="page-layout">
-
     <main class="flex-fill" id="main-content">
       <!-- Banner -->
       <section class="text-center mb-5">
@@ -12,35 +11,46 @@
       <!-- 3 Cột -->
       <div class="container-fluid">
         <div class="row">
-          <!-- Cột trái -->
-          <div class="col-md-2 mb-4 bg-light p-3">
-            <h5>📘 Thông báo</h5>
-            <p class="text-muted small">Giới thiệu, thời gian mở cửa, địa chỉ...</p>
+          <!-- Cột trái: Sticky -->
+          <div class="col-md-2 mb-4">
+            <div class="sidebar-sticky bg-light p-3 rounded shadow-sm">
+              <h5>📘 Thông báo</h5>
+              <p class="text-muted small">Giới thiệu, thời gian mở cửa, địa chỉ...</p>
+            </div>
           </div>
 
           <!-- Cột giữa: Sách tiêu biểu -->
           <div class="col-md-8 mb-4">
             <h5 class="mb-4">✨ Sách tiêu biểu</h5>
-            <div class="row justify-content-center">
-              <div class="col-6 col-md-3 mb-4" v-for="book in books" :key="book._id">
+            <div class="d-flex flex-column gap-3">
+              <div
+                v-for="(book, index) in books"
+                :key="book._id"
+                class="card h-100 text-center shadow-sm border-0 p-2"
+              >
                 <router-link
                   :to="`/books/${book._id}`"
                   class="text-decoration-none text-dark"
                 >
-                  <div class="card h-100 text-center shadow-sm border-0">
-                    <img :src="`http://localhost:3000/${book.BiaSach}`" class="book-cover card-img-top" />
-                    <div class="card-body p-2">
-                      <h6 class="book-title text-truncate fw-semibold mb-1">{{ book.TenSach }}</h6>
-                      <div class="book-author text-muted small">Tác giả: {{ book.TacGia }}</div>
+                  <div class="d-flex align-items-center">
+                    <img
+                      :src="`http://localhost:3000/${book.BiaSach}`"
+                      class="book-cover me-3"
+                    />
+                    <div class="text-start">
+                      <h6 class="mb-1 fw-semibold">
+                        {{ index + 1 }}. {{ book.TenSach }}
+                      </h6>
+                      <div class="text-muted small">Tác giả: {{ book.TacGia }}</div>
                       <div
-                        class="book-stock small"
+                        class="small"
                         :class="{
                           'text-success': book.SoQuyen >= 3,
                           'text-warning': book.SoQuyen > 0 && book.SoQuyen < 3,
                           'text-danger': book.SoQuyen === 0
                         }"
                       >
-                        Còn: {{ book.SoQuyen }}
+                        Còn: {{ book.SoQuyen }} – Lượt xem: {{ book.LuotXem }}
                       </div>
                     </div>
                   </div>
@@ -49,19 +59,20 @@
             </div>
           </div>
 
-          <!-- Cột phải -->
-          <div class="col-md-2 mb-4 bg-light p-3">
-            <h5>📰 Tin tức</h5>
-            <ul class="list-unstyled small">
-              <li>📅 Sự kiện tháng 6</li>
-              <li>📚 Sách mới về</li>
-              <li>🎁 Ưu đãi mùa hè</li>
-            </ul>
+          <!-- Cột phải: Sticky -->
+          <div class="col-md-2 mb-4">
+            <div class="sidebar-sticky bg-light p-3 rounded shadow-sm">
+              <h5>📰 Tin tức</h5>
+              <ul class="list-unstyled small">
+                <li>📅 Sự kiện tháng 6</li>
+                <li>📚 Sách mới về</li>
+                <li>🎁 Ưu đãi mùa hè</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
     </main>
-
   </div>
 </template>
 
@@ -73,9 +84,10 @@ const books = ref([]);
 
 onMounted(async () => {
   try {
-    books.value = await BookService.getTopViewed(); // Gọi top books
+    const result = await BookService.getTopViewed();
+    books.value = result;
   } catch (error) {
-    console.error("Lỗi khi tải sách tiêu biểu:", error);
+    console.error('Lỗi khi tải sách tiêu biểu:', error);
   }
 });
 </script>
@@ -92,53 +104,21 @@ main {
   padding: 20px 0;
 }
 
-/* Banner */
-#main-content img {
-  margin-bottom: 10px;
-}
-
-/* Card tổng thể */
-.card {
-  border-radius: 12px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  overflow: hidden;
-}
-
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+/* Sticky sidebar */
+.sidebar-sticky {
+  position: sticky;
+  top: 60px;
+  z-index: 2;
 }
 
 /* Ảnh bìa sách */
 .book-cover {
-  width: 100%;
-  height: 160px;
+  width: 80px;
+  height: 120px;
   object-fit: contain;
   background-color: #f9f9f9;
   padding: 4px;
-  border-bottom: 1px solid #eee;
-}
-
-/* Tên sách */
-.book-title {
-  font-size: 0.9rem;
-  height: 2.2em;
-  line-height: 1.1em;
-  overflow: hidden;
-}
-
-/* Tác giả & số lượng */
-.book-author,
-.book-stock {
-  font-size: 0.75rem;
-  color: #555;
-}
-
-/* Sticky side columns */
-.col-md-2 {
-  position: sticky;
-  top: 50px;
-  align-self: flex-start;
-  height: fit-content;
+  border: 1px solid #eee;
+  border-radius: 6px;
 }
 </style>

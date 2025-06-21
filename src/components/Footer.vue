@@ -69,7 +69,7 @@
   </script>
   
   
-  <style scoped>
+<style scoped>
   p, li {
     margin: 0;
     margin-bottom: 0.3rem;
@@ -78,5 +78,6 @@
     font-weight: bold;
     margin-bottom: 1rem;
   }
+  
   </style>
   

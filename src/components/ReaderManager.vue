@@ -54,7 +54,7 @@
                 alt="Avatar"
               />
             </td>
-            <td>
+            <td class="text-center">
               <button class="btn btn-sm btn-outline-primary me-2" @click="editReader(reader)">Sửa</button>
               <button class="btn btn-sm btn-outline-danger" @click="deleteReader(reader)">Xóa</button>
             </td>

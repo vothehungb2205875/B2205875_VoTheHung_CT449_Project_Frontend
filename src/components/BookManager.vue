@@ -57,7 +57,7 @@
                 loading="lazy"
               />
             </td>
-            <td>
+            <td class="text-center">
               <button class="btn btn-sm btn-outline-primary me-2" @click="editBook(book)">Sửa</button>
               <button class="btn btn-sm btn-outline-danger" @click="deleteBook(book)">Xóa</button>
             </td>
@@ -92,7 +92,7 @@
       :book="selectedBook"
       :mode="modalMode"
       @save="handleSave"
-    />
+    /> <!--Truyền dữ liệu xuống component con, nhận sự kiện gửi lên-->
   </div>
 </template>
 
@@ -165,9 +165,9 @@ function editBook(book) {
   showModal.value = true
 }
 
-async function handleSave(book) {
+async function handleSave(book) { // book:=formData.value được gửi từ emit ở con
   try {
-    const formData = new FormData()
+    const formData = new FormData() // gửi form multipart
     for (const key in book) {
       formData.append(key, book[key])
     }

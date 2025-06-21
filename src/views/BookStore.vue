@@ -26,7 +26,7 @@
   
             <!-- Danh sách sách -->
             <div class="col-md-10">
-              <div class="row">
+              <div class="row booklist">
                 <div
                   class="col-6 col-md-3 mb-4"
                   v-for="book in paginatedBooks"
@@ -194,5 +194,6 @@
     align-self: flex-start;
     height: fit-content;
   }
+  
   </style>
   

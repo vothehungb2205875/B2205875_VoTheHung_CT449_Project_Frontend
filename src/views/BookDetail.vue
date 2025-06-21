@@ -23,7 +23,9 @@
               <p><strong>Nhà xuất bản:</strong> {{ book.MaNXB }}</p>
 
               <div v-if="book.SoQuyen > 0" class="mt-4">
-                <button class="btn btn-primary" @click="showForm = !showForm">Đăng ký mượn sách</button>
+                <button class="btn btn-primary" @click="showForm = !showForm">
+                  Đăng ký mượn sách
+                </button>
               </div>
 
               <div v-if="showForm" class="mt-4 border-top pt-3">
@@ -73,7 +75,15 @@ const startDate = ref('')
 const endDate = ref('')
 const agreed = ref(false)
 
-// Lấy thông tin user từ localStorage
+// Hàm định dạng ngày thành chuỗi yyyy-MM-dd
+const toYYYYMMDD = (dateStr) => {
+  const d = new Date(dateStr)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
 const user = ref(null)
 onMounted(() => {
   const storedUser = localStorage.getItem('user')
@@ -86,18 +96,21 @@ onMounted(() => {
 })
 
 const today = new Date().toISOString().split('T')[0]
+
 const maxReturnDate = computed(() => {
   if (!startDate.value) return ''
   const d = new Date(startDate.value)
   d.setDate(d.getDate() + 7)
   return d.toISOString().split('T')[0]
 })
+
 const dateWarning = computed(() => {
   if (!startDate.value || !endDate.value) return false
   const start = new Date(startDate.value)
   const end = new Date(endDate.value)
   return (end - start) / (1000 * 60 * 60 * 24) > 7
 })
+
 const canSubmit = computed(() => {
   return startDate.value && endDate.value && !dateWarning.value && agreed.value
 })
@@ -122,28 +135,23 @@ const handleBorrow = async () => {
     await BorrowService.create({
       MaSach: book.value.MaSach,
       MaDocGia: user.value.MaDocGia,
-      NgayMuon: startDate.value,
-      NgayTra: endDate.value
+      NgayMuon: toYYYYMMDD(startDate.value),
+      NgayTra: toYYYYMMDD(endDate.value)
     })
 
     alert("Mượn sách thành công")
     book.value = await BookService.get(route.params.id)
     showForm.value = false
-
   } catch (err) {
-    // Đọc lỗi từ BE trả về
     const message = err.response?.data?.message || "Lỗi khi mượn sách"
     alert(message)
 
-    // Optional: nếu lỗi là thiếu thông tin thì có thể điều hướng
     if (message.includes("Vui lòng cập nhật thông tin độc giả trước khi mượn sách")) {
       router.push("/profile")
     }
   }
 }
-
 </script>
-
 
 <style scoped>
 .book-image {

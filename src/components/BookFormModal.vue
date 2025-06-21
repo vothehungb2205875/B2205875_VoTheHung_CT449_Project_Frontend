@@ -4,7 +4,7 @@
       <div class="modal-content">
         <form @submit.prevent="submit">
           <div class="modal-header">
-            <h5 class="modal-title">{{ isEditMode ? 'Chỉnh sửa sách' : 'Thêm sách' }}</h5>
+            <h5 class="modal-title">{{ isEditMode ? 'Chỉnh sửa sách' : 'Thêm sách' }}</h5> <!-- Dùng computed theo dõi -->
             <button type="button" class="btn-close" @click="closeDialog"></button>
           </div>
 
@@ -87,7 +87,7 @@
 import { ref, watch, computed, nextTick, onMounted } from 'vue'
 import PublisherService from '@/services/publisher.service'
 
-const props = defineProps({
+const props = defineProps({ // Các thành phần truyền sang component cha
   modelValue: Boolean,
   book: Object,
   mode: String
@@ -97,17 +97,17 @@ const emit = defineEmits(['update:modelValue', 'save']) // emit để gửi sự
 const formData = ref({})
 const previewImage = ref(null)
 const modalRef = ref(null)
-let modalInstance = null
+let modalInstance = null // điều khiển modal
 const publisherList = ref([])
 
-const isEditMode = computed(() => props.mode === 'edit')
+const isEditMode = computed(() => props.mode === 'edit') // cập nhật lại isEditMode dựa vào điều kiện => true or false
 
-watch(() => props.modelValue, async (val) => {
+watch(() => props.modelValue, async (val) => { // theo dõ modelValue, val là newvalue/ async (newval, oldval)
   if (val) {
-    formData.value = props.book ? { ...props.book } : {}
+    formData.value = props.book ? { ...props.book } : {} // props.book dược truyền từ component cha/ sao chép object
     previewImage.value = props.book?.BiaSach ? getImageUrl(props.book.BiaSach) : null
 
-    await nextTick()
+    await nextTick() // chờ vue render khi formDate.value được gán
     if (!modalInstance) {
       const bootstrap = await import('bootstrap')
       modalInstance = new bootstrap.Modal(modalRef.value)
@@ -122,7 +122,7 @@ function closeDialog() {
   emit('update:modelValue', false)
 }
 
-function submit() {
+function submit() { // gọi hàm @save ở component cha, truyền dữ liệu formData.value lên cha
   emit('save', formData.value)
   setTimeout(closeDialog, 50)
 }
@@ -143,7 +143,7 @@ onMounted(async () => {
   const bootstrap = await import('bootstrap')
   modalInstance = new bootstrap.Modal(modalRef.value)
   modalRef.value.addEventListener('hidden.bs.modal', () => {
-    emit('update:modelValue', false)
+    emit('update:modelValue', false) // khi đóng modal gửi data về component cha
   })
 
   try {
