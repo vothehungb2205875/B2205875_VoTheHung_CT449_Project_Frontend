@@ -8,6 +8,9 @@
         <li @click="currentView = 'books'" :class="{ active: currentView === 'books' }">📚 Quản lý Sách</li>
         <li @click="currentView = 'readers'" :class="{ active: currentView === 'readers' }">👤 Độc giả</li>
         <li @click="currentView = 'borrowings'" :class="{ active: currentView === 'borrowings' }">🔄 Mượn sách</li>
+        <li @click="currentView = 'notify'" :class="{ active: currentView === 'notify' }">
+          📰 Quản lý Thông báo
+        </li>
         <li @click="currentView = 'statistics'" :class="{ active: currentView === 'statistics' }">📈 Thống kê</li>
         <li @click.prevent="logout">🚪 Đăng xuất</li>
       </ul>
@@ -39,6 +42,8 @@ import BorrowManager from '@/components/BorrowManager.vue'
 import Statistics from '@/components/Statistics.vue'
 import AuthService from '@/services/auth.service.js'
 import StaffService from '@/services/staff.service.js'
+import NotifyManager from '@/components/NotifyManager.vue';
+
 
 const staff = ref(null)
 const router = useRouter()
@@ -50,9 +55,11 @@ const currentViewComponent = computed(() => {
     books: BookManager,
     readers: ReaderManager,
     borrowings: BorrowManager,
-    statistics: Statistics
-  }[currentView.value]
-})
+    statistics: Statistics,
+    notify: NotifyManager,
+  }[currentView.value];
+});
+
 
 // Kiểm tra quyền truy cập khi component mount
 onMounted(async () => {

@@ -1,5 +1,5 @@
 <template>
-    <footer class="bg-dark text-white pt-4 pb-2">
+    <footer class="footer text-white pt-4 pb-2">
       <div class="container">
         <div class="row text-start">
   
@@ -77,6 +77,9 @@
   h6 {
     font-weight: bold;
     margin-bottom: 1rem;
+  }
+  .footer {
+    background-color: #0E346F;
   }
   
   </style>

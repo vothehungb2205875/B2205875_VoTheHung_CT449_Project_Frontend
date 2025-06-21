@@ -13,7 +13,6 @@ const routes = [
   { path: "/books", name: "BookStore", component: BookStore },
 
   { path: "/profile", name: "Profile", component: Profile }, // vẫn có header/footer
-  { path: "/introduction", name: "Introduction", component: Introduction }, // vẫn có
 
   // Không có header/footer:
   { path: "/login", name: "Login", component: Auth, meta: { layout: "none" } },

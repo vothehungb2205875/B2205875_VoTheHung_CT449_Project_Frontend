@@ -10,8 +10,6 @@
     />
 
     <div class="d-flex justify-content-between align-items-end mb-3">
-      <!-- Phần bên trái có thể thêm nút thêm mới nếu cần -->
-
       <div class="d-flex align-items-center gap-2 ms-auto">
         <label class="mb-0">Số dòng/trang:</label>
         <select v-model="itemsPerPage" class="form-select w-auto">
@@ -21,7 +19,6 @@
         </select>
       </div>
     </div>
-
 
     <div class="table-responsive" style="min-height: 400px;">
       <table class="table table-bordered table-hover table-sm align-middle">
@@ -64,9 +61,11 @@
               <button
                 class="btn btn-sm btn-outline-warning"
                 @click="remindReturn(item)"
-                v-if="item.TrangThai === 'Đang mượn'"
+                v-if="item.TrangThai === 'Đang mượn' && isOverdue(item)"
+                :disabled="loadingMap[item._id]"
                 :class="{ blinking: isOverdue(item) }"
               >
+                <span v-if="loadingMap[item._id]" class="spinner-border spinner-border-sm me-1"></span>
                 Nhắc trả
               </button>
             </td>
@@ -75,7 +74,6 @@
       </table>
     </div>
 
-    <!-- Pagination -->
     <nav class="mt-3">
       <ul class="pagination justify-content-center">
         <li class="page-item" :class="{ disabled: currentPage === 1 }">
@@ -100,11 +98,14 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import BorrowService from '@/services/borrow.service'
+import MailService from '@/services/mail.service'
+import ReaderService from '@/services/reader.service'
 
 const borrows = ref([])
 const search = ref('')
 const currentPage = ref(1)
 const itemsPerPage = ref(5)
+const loadingMap = ref({})
 
 let intervalId = null
 
@@ -113,13 +114,12 @@ onMounted(() => {
   intervalId = setInterval(loadBorrows, 60000)
 })
 
-watch([search, itemsPerPage], () => {
-  currentPage.value = 1
-})
-
-
 onBeforeUnmount(() => {
   clearInterval(intervalId)
+})
+
+watch([search, itemsPerPage], () => {
+  currentPage.value = 1
 })
 
 async function loadBorrows() {
@@ -160,6 +160,7 @@ function statusClass(status) {
     'badge bg-success': status === 'Đã trả',
     'badge bg-danger': status === 'Đã hủy',
     'badge bg-primary': status === 'Đang mượn',
+    'badge bg-warning text-dark': status === 'Đã nhắc',
   }
 }
 
@@ -196,8 +197,34 @@ function formatDate(dateStr) {
   return !isNaN(date) ? date.toLocaleDateString('vi-VN') : 'Không hợp lệ'
 }
 
-function remindReturn(item) {
-  alert(`Gửi nhắc trả sách đến độc giả: ${item.MaDocGia}`)
+async function remindReturn(item) {
+  loadingMap.value[item._id] = true
+  try {
+    const reader = await ReaderService.getReaderByMa(item.MaDocGia)
+
+    if (!reader || !reader.email) {
+      alert('Không tìm thấy email độc giả!')
+      return
+    }
+
+    const payload = {
+      to: reader.email,
+      readerName: reader.HoTen || reader.Ten || 'Độc giả',
+      bookCode: item.MaSach,
+      dueDate: formatDate(item.NgayTra),
+    }
+
+    await MailService.sendReminder(payload)
+    await BorrowService.markAsReminded(item._id)
+    item.TrangThai = 'Đã nhắc'
+
+    alert(`Đã gửi email nhắc trả đến: ${reader.email}`)
+  } catch (err) {
+    console.error(err)
+    alert('Gửi email thất bại!')
+  } finally {
+    loadingMap.value[item._id] = false
+  }
 }
 </script>
 

@@ -27,6 +27,11 @@ class BorrowService {
     return await this.api.put(`/${id}`, payload);
   }
 
+  async markAsReminded(id) {
+    const payload = { TrangThai: "Đã nhắc" };
+    return await this.api.put(`/${id}`, payload);
+  }
+
   async statistic() {
     return (await this.api.get("/statistic")).data;
   }

@@ -15,7 +15,11 @@
           <div class="col-md-2 mb-4">
             <div class="sidebar-sticky bg-light p-3 rounded shadow-sm">
               <h5>📘 Thông báo</h5>
-              <p class="text-muted small">Giới thiệu, thời gian mở cửa, địa chỉ...</p>
+              <ul class="list-unstyled small">
+                <li v-for="(item, i) in thongbaos" :key="i">
+                  <a href="https://www.ctu.edu.vn/thong-bao.html" class="text-decoration-none d-block text-dark small">📢 {{ item.NoiDung }}</a>
+                </li>
+              </ul>
             </div>
           </div>
 
@@ -62,11 +66,11 @@
           <!-- Cột phải: Sticky -->
           <div class="col-md-2 mb-4">
             <div class="sidebar-sticky bg-light p-3 rounded shadow-sm">
-              <h5>📰 Tin tức</h5>
+              <h5>🗓️ Sự kiện</h5>
               <ul class="list-unstyled small">
-                <li>📅 Sự kiện tháng 6</li>
-                <li>📚 Sách mới về</li>
-                <li>🎁 Ưu đãi mùa hè</li>
+                <li v-for="(item, i) in sukien" :key="i">
+                <a href="https://events.ctu.edu.vn/" class="text-decoration-none d-block text-dark small">🎉 {{ item.NoiDung }}</a>
+              </li>
               </ul>
             </div>
           </div>
@@ -79,17 +83,25 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import BookService from '@/services/book.service';
+import NotifyService from '@/services/notify.service';
 
 const books = ref([]);
+const thongbaos = ref([]);
+const sukien = ref([]);
 
 onMounted(async () => {
   try {
     const result = await BookService.getTopViewed();
     books.value = result;
+
+    const allNotifies = await NotifyService.getAll();
+    thongbaos.value = allNotifies.filter((n) => n.Loai === "thongbao");
+    sukien.value = allNotifies.filter((n) => n.Loai === "sukien");
   } catch (error) {
-    console.error('Lỗi khi tải sách tiêu biểu:', error);
+    console.error("Lỗi khi tải dữ liệu:", error);
   }
 });
+
 </script>
 
 <style scoped>

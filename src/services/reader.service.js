@@ -10,6 +10,10 @@ class ReaderService {
     return (await this.api.get(`/${id}`)).data;
   }
 
+  async getReaderByMa(MaDocGia) {
+    return (await this.api.get(`/ma/${MaDocGia}`)).data;
+  }
+
   async update(id, data) {
     return (
       await this.api.put(`/${id}`, data, {

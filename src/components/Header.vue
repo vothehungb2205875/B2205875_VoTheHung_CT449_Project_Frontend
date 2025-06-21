@@ -27,9 +27,6 @@
             <router-link to="/books" class="nav-link text-white">Kho sách</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/su-kien" class="nav-link text-white">Sự kiện</router-link>
-          </li>
-          <li class="nav-item">
             <router-link to="/lien-he" class="nav-link text-white">Liên hệ</router-link>
           </li>
         </ul>
