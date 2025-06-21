@@ -31,12 +31,27 @@
               <div v-if="showForm" class="mt-4 border-top pt-3">
                 <div class="mb-3">
                   <label class="form-label">Ngày nhận sách:</label>
-                  <input type="date" class="form-control" v-model="startDate" :min="today" />
+                  <input
+                    type="date"
+                    class="form-control"
+                    v-model="startDate"
+                    :min="today"
+                    :max="maxBorrowDate"
+                  />
+                  <div v-if="startDateWarning" class="text-danger small mt-1">
+                    Chỉ được chọn hôm nay hoặc ngày mai.
+                  </div>
                 </div>
 
                 <div class="mb-3">
                   <label class="form-label">Ngày trả sách:</label>
-                  <input type="date" class="form-control" v-model="endDate" :min="startDate" :max="maxReturnDate" />
+                  <input
+                    type="date"
+                    class="form-control"
+                    v-model="endDate"
+                    :min="startDate"
+                    :max="maxReturnDate"
+                  />
                   <div v-if="dateWarning" class="text-danger small mt-1">
                     Ngày trả sách không được quá 7 ngày kể từ ngày nhận.
                   </div>
@@ -69,22 +84,15 @@ import BorrowService from '@/services/borrow.service'
 
 const router = useRouter()
 const route = useRoute()
+
 const book = ref(null)
 const showForm = ref(false)
 const startDate = ref('')
 const endDate = ref('')
 const agreed = ref(false)
 
-// Hàm định dạng ngày thành chuỗi yyyy-MM-dd
-const toYYYYMMDD = (dateStr) => {
-  const d = new Date(dateStr)
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
-
 const user = ref(null)
+
 onMounted(() => {
   const storedUser = localStorage.getItem('user')
   if (storedUser) {
@@ -97,11 +105,22 @@ onMounted(() => {
 
 const today = new Date().toISOString().split('T')[0]
 
+const maxBorrowDate = computed(() => {
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  return tomorrow.toISOString().split('T')[0]
+})
+
 const maxReturnDate = computed(() => {
   if (!startDate.value) return ''
   const d = new Date(startDate.value)
   d.setDate(d.getDate() + 7)
   return d.toISOString().split('T')[0]
+})
+
+const startDateWarning = computed(() => {
+  if (!startDate.value) return false
+  return startDate.value > maxBorrowDate.value
 })
 
 const dateWarning = computed(() => {
@@ -112,7 +131,13 @@ const dateWarning = computed(() => {
 })
 
 const canSubmit = computed(() => {
-  return startDate.value && endDate.value && !dateWarning.value && agreed.value
+  return (
+    startDate.value &&
+    endDate.value &&
+    !dateWarning.value &&
+    !startDateWarning.value &&
+    agreed.value
+  )
 })
 
 onMounted(async () => {
@@ -125,6 +150,14 @@ onMounted(async () => {
 
 const goBack = () => router.back()
 
+const toYYYYMMDD = (dateStr) => {
+  const d = new Date(dateStr)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
 const handleBorrow = async () => {
   try {
     if (!user.value || !user.value.MaDocGia) {
@@ -135,9 +168,10 @@ const handleBorrow = async () => {
     await BorrowService.create({
       MaSach: book.value.MaSach,
       MaDocGia: user.value.MaDocGia,
-      NgayMuon: toYYYYMMDD(startDate.value),
-      NgayTra: toYYYYMMDD(endDate.value)
+      NgayMuon: new Date(startDate.value),
+      NgayTra: new Date(endDate.value)
     })
+
 
     alert("Mượn sách thành công")
     book.value = await BookService.get(route.params.id)

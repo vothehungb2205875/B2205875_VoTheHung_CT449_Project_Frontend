@@ -9,6 +9,20 @@
       placeholder="Tìm kiếm theo tên, mã sách, trạng thái..."
     />
 
+    <div class="d-flex justify-content-between align-items-end mb-3">
+      <!-- Phần bên trái có thể thêm nút thêm mới nếu cần -->
+
+      <div class="d-flex align-items-center gap-2 ms-auto">
+        <label class="mb-0">Số dòng/trang:</label>
+        <select v-model="itemsPerPage" class="form-select w-auto">
+          <option :value="5">5</option>
+          <option :value="10">10</option>
+          <option :value="20">20</option>
+        </select>
+      </div>
+    </div>
+
+
     <div class="table-responsive" style="min-height: 400px;">
       <table class="table table-bordered table-hover table-sm align-middle">
         <thead class="table-light">
@@ -84,13 +98,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import BorrowService from '@/services/borrow.service'
 
 const borrows = ref([])
 const search = ref('')
 const currentPage = ref(1)
-const itemsPerPage = ref(10)
+const itemsPerPage = ref(5)
 
 let intervalId = null
 
@@ -98,6 +112,11 @@ onMounted(() => {
   loadBorrows()
   intervalId = setInterval(loadBorrows, 60000)
 })
+
+watch([search, itemsPerPage], () => {
+  currentPage.value = 1
+})
+
 
 onBeforeUnmount(() => {
   clearInterval(intervalId)

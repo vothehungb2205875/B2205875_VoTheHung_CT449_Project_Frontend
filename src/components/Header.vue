@@ -94,7 +94,7 @@ onMounted(async() => {
 
 function getAvatarUrl(path) {
   if (!path) return "http://localhost:3000/uploads/avatars/default.jpg"
-  return /^https?:\/\//.test(path) ? path : `http://localhost:3000${path}`
+  return /^https?:\/\//.test(path) ? path : `http://localhost:3000/${path}`
 }
 
 async function logout() {

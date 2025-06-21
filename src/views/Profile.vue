@@ -17,6 +17,28 @@
           <div v-else-if="editing" class="card shadow-sm p-4 mx-auto" style="max-width: 700px">
             <h5 class="mb-3">Cập nhật thông tin cá nhân</h5>
             <form @submit.prevent="updateProfile">
+              <div class="text-center mb-3">
+                <img
+                  :src="previewAvatarUrl || getAvatarUrl(editData.avatar)"
+                  alt="Preview"
+                  class="rounded-circle border"
+                  width="100"
+                  height="100"
+                  style="object-fit: cover"
+                  @error="handleImageError"
+                />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Ảnh đại diện</label>
+                <input
+                  type="file"
+                  class="form-control"
+                  accept="image/*"
+                  @change="handleAvatarChange"
+                />
+              </div>
+
               <div class="mb-3" v-for="(label, key) in fields" :key="key">
                 <label class="form-label">{{ label }}</label>
                 <input
@@ -34,13 +56,12 @@
 
               <div class="d-flex justify-content-between">
                 <button type="submit" class="btn btn-success">Lưu thay đổi</button>
-                <button type="button" class="btn btn-secondary" @click="editing = false">Hủy</button>
+                <button type="button" class="btn btn-secondary" @click="cancelEdit">Hủy</button>
               </div>
             </form>
           </div>
 
           <div v-else class="row g-4">
-            <!-- Thông tin cá nhân -->
             <div class="col-md-6">
               <div class="card shadow-sm p-4 h-100">
                 <div class="d-flex align-items-center gap-4 mb-4">
@@ -73,7 +94,6 @@
               </div>
             </div>
 
-            <!-- Lịch sử mượn -->
             <div class="col-md-6">
               <div class="card shadow-sm p-4 h-100 d-flex flex-column">
                 <button class="btn btn-outline-success w-100 mb-3" @click="showHistory = !showHistory">
@@ -95,10 +115,7 @@
                         </div>
                         <div class="text-end">
                           <span
-                            :class="[
-                              statusClass(item),
-                              isOverdue(item) ? 'blinking' : ''
-                            ]"
+                            :class="[statusClass(item), isOverdue(item) ? 'blinking' : '']"
                             class="mb-2 d-inline-block"
                           >
                             {{ isOverdue(item) ? 'Quá hạn' : item.TrangThai }}
@@ -140,6 +157,8 @@ const user = ref(null);
 const editData = ref({});
 const showHistory = ref(false);
 const borrowHistory = ref([]);
+const selectedAvatarFile = ref(null);
+const previewAvatarUrl = ref(null);
 
 const fields = {
   HoLot: "Họ lót",
@@ -154,19 +173,13 @@ const fields = {
 
 onMounted(async () => {
   try {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      router.push("/login");
-      return;
-    }
-
     const res = await authService.getCurrentUser();
     user.value = await ReaderService.getReaderById(res._id);
     editData.value = { ...user.value };
-
     borrowHistory.value = await BorrowService.history(user.value.MaDocGia);
   } catch (err) {
     console.error("Không thể lấy thông tin người dùng:", err);
+    router.push("/login");
   } finally {
     loading.value = false;
   }
@@ -174,11 +187,55 @@ onMounted(async () => {
 
 function getAvatarUrl(path) {
   if (!path) return "/uploads/default.jpg";
-  return /^https?:\/\//.test(path) ? path : `http://localhost:3000${path}`;
+  return /^https?:\/\//.test(path) ? path : `http://localhost:3000/${path}`;
 }
 
 function handleImageError(e) {
   e.target.src = "/uploads/default.jpg";
+}
+
+function handleAvatarChange(e) {
+  const file = e.target.files[0];
+  if (file) {
+    selectedAvatarFile.value = file;
+    previewAvatarUrl.value = URL.createObjectURL(file);
+  }
+}
+
+function cancelEdit() {
+  editing.value = false;
+  resetPreview();
+}
+
+function resetPreview() {
+  if (previewAvatarUrl.value) {
+    URL.revokeObjectURL(previewAvatarUrl.value);
+    previewAvatarUrl.value = null;
+  }
+}
+
+async function updateProfile() {
+  try {
+    const formData = new FormData();
+    for (const key in editData.value) {
+      formData.append(key, editData.value[key]);
+    }
+    if (selectedAvatarFile.value) {
+      formData.append("avatar", selectedAvatarFile.value);
+    }
+
+    await ReaderService.update(user.value._id, formData);
+    const updatedUser = await ReaderService.getReaderById(user.value._id);
+    user.value = updatedUser;
+    editData.value = { ...updatedUser };
+    localStorage.setItem("user", JSON.stringify(user.value)); // dùng trong header
+    editing.value = false;
+    resetPreview();
+    alert("Cập nhật thành công!");
+  } catch (err) {
+    console.error("Lỗi cập nhật:", err);
+    alert("Cập nhật thất bại.");
+  }
 }
 
 function formatDate(dateStr) {
@@ -188,28 +245,18 @@ function formatDate(dateStr) {
 }
 
 function isOverdue(item) {
-  if (item.TrangThai !== "Đang mượn" || !item.NgayTra) return false;
-  const today = new Date();
-  const due = new Date(item.NgayTra);
-  return due < today;
+  return item.TrangThai === "Đang mượn" && new Date(item.NgayTra) < new Date();
 }
 
 function statusClass(item) {
-  if (isOverdue(item)) return 'badge bg-danger blinking'; // Quá hạn
-  switch (item.TrangThai) {
-    case 'Chưa trả':
-      return 'badge bg-secondary';
-    case 'Đã trả':
-      return 'badge bg-success';
-    case 'Đã hủy':
-      return 'badge bg-danger';
-    case 'Đang mượn':
-      return 'badge bg-primary';
-    default:
-      return 'badge bg-secondary';
-  }
+  if (isOverdue(item)) return "badge bg-danger blinking";
+  return {
+    "Chưa trả": "badge bg-secondary",
+    "Đã trả": "badge bg-success",
+    "Đã hủy": "badge bg-danger",
+    "Đang mượn": "badge bg-primary",
+  }[item.TrangThai] || "badge bg-secondary";
 }
-
 
 async function cancelBorrow(item) {
   if (!confirm("Bạn chắc chắn muốn hủy lượt mượn này?")) return;
@@ -221,21 +268,6 @@ async function cancelBorrow(item) {
   } catch (err) {
     console.error("Lỗi hủy lượt mượn:", err);
     alert("Không thể hủy lượt mượn.");
-  }
-}
-
-async function updateProfile() {
-  try {
-    await ReaderService.update(user.value._id, editData.value);
-    const updatedUser = await ReaderService.getReaderById(user.value._id);
-    user.value = updatedUser;
-    editData.value = { ...updatedUser };
-    localStorage.setItem("user", JSON.stringify(user.value));
-    editing.value = false;
-    alert("Cập nhật thành công!");
-  } catch (err) {
-    console.error("Lỗi cập nhật:", err);
-    alert("Cập nhật thất bại.");
   }
 }
 </script>
@@ -269,11 +301,10 @@ main {
 .blinking {
   animation: blink 1s infinite;
   border: 1px solid red;
-  color: rgb(255, 255, 255);
+  color: white;
   padding: 4px 10px;
   border-radius: 0.3rem;
 }
-
 
 @keyframes blink {
   0%, 100% { opacity: 1; }
