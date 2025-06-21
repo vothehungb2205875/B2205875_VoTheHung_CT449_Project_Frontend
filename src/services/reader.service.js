@@ -38,6 +38,10 @@ class ReaderService {
       })
     ).data;
   }
+
+  async statistic() {
+    return (await this.api.get("/statistic")).data;
+  }
 }
 
 export default new ReaderService();
