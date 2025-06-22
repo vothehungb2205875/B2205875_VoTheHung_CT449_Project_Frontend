@@ -18,7 +18,9 @@ class BorrowService {
   }
 
   async markAsReturned(id) {
-    const payload = { TrangThai: "Đã trả" };
+    const payload = {
+      TrangThai: "Đã trả",
+    };
     return await this.api.put(`/${id}`, payload);
   }
 
@@ -28,7 +30,7 @@ class BorrowService {
   }
 
   async markAsReminded(id) {
-    const payload = { TrangThai: "Đã nhắc" };
+    const payload = { TrangThai: "Quá hạn" };
     return await this.api.put(`/${id}`, payload);
   }
 

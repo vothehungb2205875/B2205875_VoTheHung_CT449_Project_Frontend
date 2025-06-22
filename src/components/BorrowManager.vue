@@ -47,7 +47,7 @@
               <button
                 class="btn btn-sm btn-outline-success me-2"
                 @click="markReturned(item)"
-                v-if="item.TrangThai === 'Đang mượn'"
+                v-if="item.TrangThai === 'Đang mượn' || item.TrangThai === 'Quá hạn'"
               >
                 Đã trả
               </button>
@@ -160,7 +160,7 @@ function statusClass(status) {
     'badge bg-success': status === 'Đã trả',
     'badge bg-danger': status === 'Đã hủy',
     'badge bg-primary': status === 'Đang mượn',
-    'badge bg-warning text-dark': status === 'Đã nhắc',
+    'badge bg-warning text-dark': status === 'Quá hạn',
   }
 }
 
@@ -216,7 +216,7 @@ async function remindReturn(item) {
 
     await MailService.sendReminder(payload)
     await BorrowService.markAsReminded(item._id)
-    item.TrangThai = 'Đã nhắc'
+    item.TrangThai = 'Quá hạn'
 
     alert(`Đã gửi email nhắc trả đến: ${reader.email}`)
   } catch (err) {

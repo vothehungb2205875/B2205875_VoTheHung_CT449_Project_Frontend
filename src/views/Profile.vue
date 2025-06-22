@@ -37,6 +37,7 @@
                   accept="image/*"
                   @change="handleAvatarChange"
                 />
+                <div class="text-danger mt-1" v-if="profileErrors.avatar">{{ profileErrors.avatar }}</div>
               </div>
 
               <div class="mb-3" v-for="(label, key) in fields" :key="key">
@@ -52,6 +53,7 @@
                   <option value="Nam">Nam</option>
                   <option value="Nữ">Nữ</option>
                 </select>
+                <div class="text-danger mt-1" v-if="profileErrors[key]">{{ profileErrors[key] }}</div>
               </div>
 
               <div class="d-flex justify-content-between">
@@ -114,14 +116,11 @@
                           <small>Hạn trả: {{ formatDate(item.NgayTra) }}</small>
                         </div>
                         <div class="text-end">
-                          <span
-                            :class="[statusClass(item), isOverdue(item) ? 'blinking' : '']"
-                            class="mb-2 d-inline-block"
-                          >
-                            {{ isOverdue(item) ? 'Quá hạn' : item.TrangThai }}
+                          <span :class="statusClass(item)" class="mb-2 d-inline-block">
+                            {{ item.TrangThai }}
                           </span>
                           <button
-                            v-if="item.TrangThai === 'Đang mượn' && !isOverdue(item)"
+                            v-if="item.TrangThai === 'Đang mượn'"
                             @click="cancelBorrow(item)"
                             class="btn btn-sm btn-outline-danger d-block mt-2"
                           >
@@ -143,14 +142,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import ReaderService from "@/services/reader.service";
-import authService from "@/services/auth.service";
-import BorrowService from "@/services/borrow.service";
+import { ref, reactive, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import ReaderService from '@/services/reader.service';
+import authService from '@/services/auth.service';
+import BorrowService from '@/services/borrow.service';
 
 const router = useRouter();
-
 const loading = ref(true);
 const editing = ref(false);
 const user = ref(null);
@@ -160,15 +158,13 @@ const borrowHistory = ref([]);
 const selectedAvatarFile = ref(null);
 const previewAvatarUrl = ref(null);
 
+const profileErrors = reactive({
+  HoLot: '', Ten: '', NgaySinh: '', Phai: '', DiaChi: '', DienThoai: '', avatar: ''
+});
+
 const fields = {
-  HoLot: "Họ lót",
-  Ten: "Tên",
-  NgaySinh: "Ngày sinh",
-  Phai: "Phái",
-  DiaChi: "Địa chỉ",
-  DienThoai: "Điện thoại",
-  name: "Tên hiển thị",
-  email: "Email",
+  HoLot: 'Họ lót', Ten: 'Tên', NgaySinh: 'Ngày sinh', Phai: 'Phái',
+  DiaChi: 'Địa chỉ', DienThoai: 'Điện thoại', name: 'Tên hiển thị', email: 'Email'
 };
 
 onMounted(async () => {
@@ -178,20 +174,20 @@ onMounted(async () => {
     editData.value = { ...user.value };
     borrowHistory.value = await BorrowService.history(user.value.MaDocGia);
   } catch (err) {
-    console.error("Không thể lấy thông tin người dùng:", err);
-    router.push("/login");
+    console.error('Không thể lấy thông tin người dùng:', err);
+    router.push('/login');
   } finally {
     loading.value = false;
   }
 });
 
 function getAvatarUrl(path) {
-  if (!path) return "/uploads/default.jpg";
+  if (!path) return '/uploads/default.jpg';
   return /^https?:\/\//.test(path) ? path : `http://localhost:3000/${path}`;
 }
 
 function handleImageError(e) {
-  e.target.src = "/uploads/default.jpg";
+  e.target.src = '/uploads/default.jpg';
 }
 
 function handleAvatarChange(e) {
@@ -202,11 +198,6 @@ function handleAvatarChange(e) {
   }
 }
 
-function cancelEdit() {
-  editing.value = false;
-  resetPreview();
-}
-
 function resetPreview() {
   if (previewAvatarUrl.value) {
     URL.revokeObjectURL(previewAvatarUrl.value);
@@ -214,60 +205,101 @@ function resetPreview() {
   }
 }
 
+function cancelEdit() {
+  editing.value = false;
+  resetPreview();
+}
+
 async function updateProfile() {
+  Object.keys(profileErrors).forEach(key => profileErrors[key] = '');
+  let isValid = true;
+
+  const nameRegex = /^[A-Za-zÀ-ỹ\s]+$/u;
+  if (!nameRegex.test(editData.value.HoLot)) {
+    profileErrors.HoLot = 'Họ lót không hợp lệ!'; isValid = false;
+  }
+  if (!nameRegex.test(editData.value.Ten)) {
+    profileErrors.Ten = 'Tên không hợp lệ!'; isValid = false;
+  }
+
+  const phoneRegex = /^[0-9]{9,11}$/;
+  if (!phoneRegex.test(editData.value.DienThoai)) {
+    profileErrors.DienThoai = 'Số điện thoại không hợp lệ!'; isValid = false;
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  if (editData.value.NgaySinh > today) {
+    profileErrors.NgaySinh = 'Ngày sinh không hợp lệ!'; isValid = false;
+  }
+
+  if (!editData.value.Phai) {
+    profileErrors.Phai = 'Vui lòng chọn giới tính!'; isValid = false;
+  }
+
+  if (!editData.value.DiaChi) {
+    profileErrors.DiaChi = 'Địa chỉ không được để trống!'; isValid = false;
+  }
+
+  if (selectedAvatarFile.value) {
+    const allowed = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowed.includes(selectedAvatarFile.value.type)) {
+      profileErrors.avatar = 'Ảnh không hợp lệ (jpg, png)!'; isValid = false;
+    }
+    if (selectedAvatarFile.value.size / 1024 / 1024 > 2) {
+      profileErrors.avatar = 'Ảnh vượt quá 2MB!'; isValid = false;
+    }
+  }
+
+  if (!isValid) return;
+
   try {
     const formData = new FormData();
     for (const key in editData.value) {
       formData.append(key, editData.value[key]);
     }
     if (selectedAvatarFile.value) {
-      formData.append("avatar", selectedAvatarFile.value);
+      formData.append('avatar', selectedAvatarFile.value);
     }
 
     await ReaderService.update(user.value._id, formData);
     const updatedUser = await ReaderService.getReaderById(user.value._id);
     user.value = updatedUser;
     editData.value = { ...updatedUser };
-    localStorage.setItem("user", JSON.stringify(user.value)); // dùng trong header
+    localStorage.setItem('user', JSON.stringify(user.value));
     editing.value = false;
     resetPreview();
-    alert("Cập nhật thành công!");
+    alert('Cập nhật thành công!');
   } catch (err) {
-    console.error("Lỗi cập nhật:", err);
-    alert("Cập nhật thất bại.");
+    console.error('Lỗi cập nhật:', err);
+    alert('Cập nhật thất bại.');
   }
 }
 
 function formatDate(dateStr) {
-  if (!dateStr) return "Chưa có";
+  if (!dateStr) return 'Chưa có';
   const date = new Date(dateStr);
-  return !isNaN(date) ? date.toLocaleDateString("vi-VN") : "Không hợp lệ";
-}
-
-function isOverdue(item) {
-  return item.TrangThai === "Đang mượn" && new Date(item.NgayTra) < new Date();
+  return !isNaN(date) ? date.toLocaleDateString('vi-VN') : 'Không hợp lệ';
 }
 
 function statusClass(item) {
-  if (isOverdue(item)) return "badge bg-danger blinking";
   return {
-    "Chưa trả": "badge bg-secondary",
-    "Đã trả": "badge bg-success",
-    "Đã hủy": "badge bg-danger",
-    "Đang mượn": "badge bg-primary",
-  }[item.TrangThai] || "badge bg-secondary";
+    'Chưa trả': 'badge bg-secondary',
+    'Đã trả': 'badge bg-success',
+    'Đã hủy': 'badge bg-danger',
+    'Đang mượn': 'badge bg-primary',
+    'Quá hạn': 'badge bg-danger blinking'
+  }[item.TrangThai] || 'badge bg-secondary';
 }
 
 async function cancelBorrow(item) {
-  if (!confirm("Bạn chắc chắn muốn hủy lượt mượn này?")) return;
-
+  if (!confirm('Bạn chắc chắn muốn hủy lượt mượn này?')) return;
   try {
     await BorrowService.cancelBorrow(item._id);
-    item.TrangThai = "Đã hủy";
-    alert("Đã hủy lượt mượn.");
+    item.TrangThai = 'Đã hủy';
+    alert('Đã hủy lượt mượn.');
   } catch (err) {
-    console.error("Lỗi hủy lượt mượn:", err);
-    alert("Không thể hủy lượt mượn.");
+    console.error('Lỗi hủy lượt mượn:', err);
+    alert('Không thể hủy lượt mượn.');
   }
 }
 </script>
@@ -293,6 +325,7 @@ main {
 .borrow-history-scroll::-webkit-scrollbar {
   width: 6px;
 }
+
 .borrow-history-scroll::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 4px;
@@ -309,5 +342,10 @@ main {
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.2; }
+}
+
+.text-danger {
+  font-size: 0.875rem;
+  color: red;
 }
 </style>
