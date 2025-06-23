@@ -1,3 +1,12 @@
+# Project Frontend
+
+## Thông tin sinh viên
+
+- **Họ và tên:** Võ Thế Hưng  
+- **MSSV:** B2205875  
+- **Nhóm học phần:** CT449-02
+
+
 # library-frontend
 
 This template should help get you started developing with Vue 3 in Vite.
