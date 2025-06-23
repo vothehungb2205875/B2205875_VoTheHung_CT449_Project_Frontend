@@ -96,10 +96,7 @@ onMounted(() => {
   const storedUser = localStorage.getItem('user')
   if (storedUser) {
     user.value = JSON.parse(storedUser)
-  } else {
-    alert("Bạn cần đăng nhập để mượn sách.")
-    router.push("/login")
-  }
+  } 
 })
 
 const today = new Date().toISOString().split('T')[0]
@@ -153,7 +150,7 @@ const goBack = () => router.back()
 const handleBorrow = async () => {
   try {
     if (!user.value || !user.value.MaDocGia) {
-      alert("Không xác định được thông tin người dùng.")
+      alert("Vui lòng đăng nhập để mượn sách.")
       return
     }
 
