@@ -7,6 +7,8 @@ import Auth from "@/views/Auth.vue";
 import DashBoard from "@/views/DashBoard.vue";
 import Introduction from "@/views/Introduction.vue";
 import BookStore from "@/views/BookStore.vue";
+import QandA from "@/views/QandA.vue";
+
 const routes = [
   { path: "/", name: "home", component: Home },
   { path: "/books/:id", name: "BookDetail", component: BookDetail },
@@ -14,6 +16,7 @@ const routes = [
 
   { path: "/profile", name: "Profile", component: Profile },
   { path: "/introduction", name: "Introduction", component: Introduction },
+  { path: "/Q&A", name: "QandA", component: QandA },
 
   // Không có header/footer:
   { path: "/login", name: "Login", component: Auth, meta: { layout: "none" } },

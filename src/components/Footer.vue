@@ -5,16 +5,16 @@
   
           <!-- Cột 1: Thông tin liên hệ -->
           <div class="col-md-3 mb-3">
-            <h6>📍 Thông tin liên hệ</h6>
-            <p>Thư viện trực tuyến CTLIB</p>
-            <p>Khu II, Đ. 3 Tháng 2, Xuân Khánh, Ninh Kiều, Cần Thơ</p>
-            <p>📞 0292 3831 530</p>
-            <p>📧 tthl@ctu.edu.vn</p>
+            <h6>Thông tin liên hệ</h6>
+            <p><font-awesome-icon icon="location-dot" class="me-2" /> Khu II, Đ. 3 Tháng 2, Xuân Khánh, Ninh Kiều, Cần Thơ</p>
+            <p><font-awesome-icon icon="phone" class="me-2" /> 0292 3831 530</p>
+            <p><font-awesome-icon icon="fax" class="me-2" /> (0292) 3 831 130</p>
+            <p><font-awesome-icon icon="envelope" class="me-2" /> tthl@ctu.edu.vn</p>
           </div>
-  
+
           <!-- Cột 2: Nhà xuất bản tài trợ -->
           <div class="col-md-3 mb-3">
-            <h6>🏢 Nhà xuất bản tài trợ</h6>
+            <h6>Nhà xuất bản tài trợ</h6>
             <ul class="list-unstyled small">
               <li>NXB ĐHQG HCM</li>
               <li>NXB ĐHQG HN</li>
@@ -24,11 +24,11 @@
   
           <!-- Cột 3: Quy định & Chính sách -->
           <div class="col-md-3 mb-3">
-            <h6>📄 Quy định & Chính sách</h6>
+            <h6>Quy định & Chính sách</h6>
             <ul class="list-unstyled small">
-              <li><a href="/rules" class="text-white text-decoration-none">Quy định mượn/trả</a></li>
-              <li><a href="/privacy" class="text-white text-decoration-none">Chính sách bảo mật</a></li>
-              <li><a href="/terms" class="text-white text-decoration-none">Điều khoản sử dụng</a></li>
+              <router-link to="/Q&A" class="nav-link text-white">Quy định mượn/trả</router-link>
+              <router-link to="/Q&A" class="nav-link text-white">Chính sách bảo mật</router-link>
+              <router-link to="/Q&A" class="nav-link text-white">Điều khoản sử dụng</router-link>
             </ul>
           </div>
   

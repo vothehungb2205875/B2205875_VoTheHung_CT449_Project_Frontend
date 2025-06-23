@@ -16,6 +16,13 @@ import {
   faArrowUp,
   faAnglesLeft,
   faAnglesRight,
+  faBookOpenReader,
+  faUserPlus,
+  faArrowsRotate,
+  faLocationDot,
+  faPhone,
+  faFax,
+  faEnvelope,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faFacebook,
@@ -33,7 +40,14 @@ library.add(
   faFacebookMessenger,
   faArrowUp,
   faAnglesLeft,
-  faAnglesRight
+  faAnglesRight,
+  faBookOpenReader,
+  faUserPlus,
+  faArrowsRotate,
+  faLocationDot,
+  faPhone,
+  faFax,
+  faEnvelope
 );
 
 /* Tạo app */

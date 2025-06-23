@@ -39,7 +39,7 @@
                     :max="maxBorrowDate"
                   />
                   <div v-if="startDateWarning" class="text-danger small mt-1">
-                    Chỉ được chọn hôm nay hoặc ngày mai.
+                    Ngày nhận sách phải là hôm nay hoặc ngày mai.
                   </div>
                 </div>
 
@@ -53,7 +53,7 @@
                     :max="maxReturnDate"
                   />
                   <div v-if="dateWarning" class="text-danger small mt-1">
-                    Ngày trả sách không được quá 7 ngày kể từ ngày nhận.
+                    Ngày trả sách phải sau ngày nhận và không quá 7 ngày.
                   </div>
                 </div>
 
@@ -90,7 +90,6 @@ const showForm = ref(false)
 const startDate = ref('')
 const endDate = ref('')
 const agreed = ref(false)
-
 const user = ref(null)
 
 onMounted(() => {
@@ -120,22 +119,23 @@ const maxReturnDate = computed(() => {
 
 const startDateWarning = computed(() => {
   if (!startDate.value) return false
-  return startDate.value > maxBorrowDate.value
+  return startDate.value < today || startDate.value > maxBorrowDate.value
 })
 
 const dateWarning = computed(() => {
   if (!startDate.value || !endDate.value) return false
   const start = new Date(startDate.value)
   const end = new Date(endDate.value)
-  return (end - start) / (1000 * 60 * 60 * 24) > 7
+  const diff = (end - start) / (1000 * 60 * 60 * 24)
+  return diff < 0 || diff > 7
 })
 
 const canSubmit = computed(() => {
   return (
     startDate.value &&
     endDate.value &&
-    !dateWarning.value &&
     !startDateWarning.value &&
+    !dateWarning.value &&
     agreed.value
   )
 })
@@ -149,14 +149,6 @@ onMounted(async () => {
 })
 
 const goBack = () => router.back()
-
-const toYYYYMMDD = (dateStr) => {
-  const d = new Date(dateStr)
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
 
 const handleBorrow = async () => {
   try {
@@ -172,10 +164,12 @@ const handleBorrow = async () => {
       NgayTra: new Date(endDate.value)
     })
 
-
     alert("Mượn sách thành công")
     book.value = await BookService.get(route.params.id)
     showForm.value = false
+    startDate.value = ''
+    endDate.value = ''
+    agreed.value = false
   } catch (err) {
     const message = err.response?.data?.message || "Lỗi khi mượn sách"
     alert(message)
