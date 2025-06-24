@@ -150,32 +150,44 @@ const goBack = () => router.back()
 const handleBorrow = async () => {
   try {
     if (!user.value || !user.value.MaDocGia) {
-      alert("Vui lòng đăng nhập để mượn sách.")
-      return
+      alert("Vui lòng đăng nhập để mượn sách.");
+      return;
     }
 
+    // Gọi lịch sử mượn sách từ API
+    const borrowHistory = await BorrowService.history(user.value.MaDocGia);
+
+    // Lọc các lượt mượn đang còn hiệu lực (chưa trả)
+    const activeBorrows = borrowHistory.filter(b => b.TrangThai === 'Đang mượn');
+
+    if (activeBorrows.length >= 3) {
+      alert("Bạn đã có 3 sách đang mượn. Vui lòng trả sách trước khi tiếp tục.");
+      return;
+    }
+
+    // Nếu hợp lệ, gửi yêu cầu mượn sách
     await BorrowService.create({
       MaSach: book.value.MaSach,
       MaDocGia: user.value.MaDocGia,
       NgayMuon: new Date(startDate.value),
       NgayTra: new Date(endDate.value)
-    })
+    });
 
-    alert("Mượn sách thành công")
-    book.value = await BookService.get(route.params.id)
-    showForm.value = false
-    startDate.value = ''
-    endDate.value = ''
-    agreed.value = false
+    alert("Mượn sách thành công");
+    book.value = await BookService.get(route.params.id);
+    showForm.value = false;
+    startDate.value = '';
+    endDate.value = '';
+    agreed.value = false;
   } catch (err) {
-    const message = err.response?.data?.message || "Lỗi khi mượn sách"
-    alert(message)
+    const message = err.response?.data?.message || "Lỗi khi mượn sách";
+    alert(message);
 
-    if (message.includes("Vui lòng cập nhật thông tin độc giả trước khi mượn sách")) {
-      router.push("/profile")
+    if (message.includes("Vui lòng cập nhật thông tin độc giả")) {
+      router.push("/profile");
     }
   }
-}
+};
 </script>
 
 <style scoped>

@@ -46,6 +46,11 @@ class ReaderService {
   async statistic() {
     return (await this.api.get("/statistic")).data;
   }
+
+  // reader.service.js
+  async getFiltered(params) {
+    return (await this.api.get("/", { params })).data;
+  }
 }
 
 export default new ReaderService();

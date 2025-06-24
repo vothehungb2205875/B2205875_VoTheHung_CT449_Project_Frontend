@@ -40,7 +40,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="book in paginatedBooks" :key="book._id">
+          <tr v-for="book in books" :key="book._id">
             <td>{{ book.MaSach }}</td>
             <td class="truncate" :title="book.TenSach">{{ book.TenSach }}</td>
             <td class="truncate" :title="book.TacGia">{{ book.TacGia }}</td>
@@ -102,6 +102,7 @@ import BookService from '@/services/book.service'
 import BookFormModal from '@/components/BookFormModal.vue'
 
 const books = ref([])
+const totalBooks = ref(0)
 const search = ref('')
 const showModal = ref(false)
 const selectedBook = ref(null)
@@ -111,37 +112,38 @@ const modalMode = ref('add')
 const currentPage = ref(1)
 const itemsPerPage = ref(5)
 
-onMounted(loadBooks)
-
-watch([search, itemsPerPage], () => {
-  currentPage.value = 1
-})
-
+// Gọi dữ liệu từ BE
 async function loadBooks() {
   try {
-    books.value = await BookService.getAll()
+    const params = {
+      q: search.value || undefined,
+      page: currentPage.value,
+      limit: itemsPerPage.value
+    }
+
+    const res = await BookService.getFiltered(params)
+    books.value = res.data
+    totalBooks.value = res.total
   } catch (e) {
     console.error('Lỗi khi tải danh sách:', e)
   }
 }
 
-const filteredBooks = computed(() => {
-  const keyword = search.value.toLowerCase()
-  return books.value.filter(book =>
-    Object.values(book).some(
-      value => value && value.toString().toLowerCase().includes(keyword)
-    )
-  )
+// Khi khởi động
+onMounted(loadBooks)
+
+// Gọi lại khi tìm kiếm hoặc thay đổi số dòng/trang
+watch([search, itemsPerPage], () => {
+  currentPage.value = 1
+  loadBooks()
 })
+
+// Gọi lại khi chuyển trang
+watch(currentPage, loadBooks)
 
 const totalPages = computed(() =>
-  Math.ceil(filteredBooks.value.length / itemsPerPage.value)
+  Math.ceil(totalBooks.value / itemsPerPage.value)
 )
-
-const paginatedBooks = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  return filteredBooks.value.slice(start, start + itemsPerPage.value)
-})
 
 function goToPage(page) {
   if (page >= 1 && page <= totalPages.value) {
@@ -165,25 +167,20 @@ function editBook(book) {
   showModal.value = true
 }
 
-async function handleSave(book) { // book:=formData.value được gửi từ emit ở con
+async function handleSave(book) {
   try {
-    const formData = new FormData() // gửi form multipart
+    const formData = new FormData()
     for (const key in book) {
       formData.append(key, book[key])
     }
 
     if (modalMode.value === 'add') {
       const newBook = await BookService.create(formData)
-      books.value.push(newBook)
+      loadBooks() // reload lại danh sách
       alert("Thêm sách thành công")
     } else if (modalMode.value === 'edit' && book._id) {
       const res = await BookService.update(book._id, formData)
-      const updated = res.document
-
-      const index = books.value.findIndex(b => b._id === book._id)
-      if (index !== -1) {
-        books.value.splice(index, 1, updated)
-      }
+      loadBooks() // reload lại danh sách
     }
   } catch (e) {
     console.error('Lỗi khi lưu:', e)
@@ -196,13 +193,14 @@ async function deleteBook(book) {
 
   try {
     await BookService.delete(book._id)
-    books.value = books.value.filter(b => b._id !== book._id)
+    loadBooks() // cập nhật lại danh sách
   } catch (error) {
     console.error('Lỗi khi xóa sách:', error)
     alert('Xóa sách thất bại.')
   }
 }
 </script>
+
 
 <style scoped>
 .table td,

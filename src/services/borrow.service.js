@@ -37,6 +37,10 @@ class BorrowService {
   async statistic() {
     return (await this.api.get("/statistic")).data;
   }
+
+  async getFiltered(params) {
+    return (await this.api.get("/", { params })).data;
+  }
 }
 
 export default new BorrowService();

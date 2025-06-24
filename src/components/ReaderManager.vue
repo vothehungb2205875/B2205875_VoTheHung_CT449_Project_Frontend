@@ -39,7 +39,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="reader in paginatedReaders" :key="reader._id">
+          <tr v-for="reader in readers" :key="reader._id">
             <td>{{ reader.MaDocGia }}</td>
             <td>{{ reader.HoLot }}</td>
             <td>{{ reader.Ten }}</td>
@@ -99,6 +99,7 @@ import ReaderService from '@/services/reader.service'
 import ReaderFormModal from '@/components/ReaderFormModal.vue'
 
 const readers = ref([])
+const totalReaders = ref(0)
 const search = ref('')
 const showModal = ref(false)
 const selectedReader = ref(null)
@@ -107,42 +108,47 @@ const modalMode = ref('add')
 const currentPage = ref(1)
 const itemsPerPage = ref(5)
 
-onMounted(loadReaders)
-
-watch([search, itemsPerPage], () => {
-  currentPage.value = 1
-})
-
+// Tải danh sách từ BE (phân trang + tìm kiếm)
 async function loadReaders() {
   try {
-    readers.value = await ReaderService.getAll()
+    const params = {
+      q: search.value || undefined,
+      page: currentPage.value,
+      limit: itemsPerPage.value
+    }
+
+    const res = await ReaderService.getFiltered(params)
+    readers.value = res.data
+    totalReaders.value = res.total
   } catch (e) {
     console.error('Lỗi khi tải danh sách độc giả:', e)
   }
 }
 
-const filteredReaders = computed(() => {
-  const keyword = search.value.toLowerCase()
-  return readers.value.filter(reader =>
-    Object.values(reader).some(
-      value => value && value.toString().toLowerCase().includes(keyword)
-    )
-  )
+// Khởi động
+onMounted(loadReaders)
+
+// Khi tìm kiếm hoặc đổi số dòng
+watch([search, itemsPerPage], () => {
+  currentPage.value = 1
+  loadReaders()
 })
+
+// Khi chuyển trang
+watch(currentPage, loadReaders)
 
 const totalPages = computed(() =>
-  Math.ceil(filteredReaders.value.length / itemsPerPage.value)
+  Math.ceil(totalReaders.value / itemsPerPage.value)
 )
-
-const paginatedReaders = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  return filteredReaders.value.slice(start, start + itemsPerPage.value)
-})
 
 function goToPage(page) {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page
   }
+}
+
+function getImageUrl(path) {
+  return path.startsWith('http') ? path : `http://localhost:3000/${path}`
 }
 
 function addReader() {
@@ -161,16 +167,11 @@ async function handleSave(readerFormData) {
   try {
     if (modalMode.value === 'add') {
       const newReader = await ReaderService.create(readerFormData)
-      readers.value.push(newReader)
+      loadReaders()
       alert("Thêm độc giả thành công")
     } else if (modalMode.value === 'edit' && selectedReader.value?._id) {
       const updated = await ReaderService.update(selectedReader.value._id, readerFormData)
-      console.log("Dữ liệu sau cập nhật:", updated)
-
-      const index = readers.value.findIndex(r => r._id === updated._id)
-      if (index !== -1) {
-        readers.value.splice(index, 1, updated)  // thay thế trong danh sách
-      }
+      loadReaders()
     }
   } catch (e) {
     console.error('Lỗi khi lưu độc giả:', e)
@@ -178,21 +179,16 @@ async function handleSave(readerFormData) {
   }
 }
 
-
 async function deleteReader(reader) {
   if (!confirm(`Xác nhận xóa độc giả "${reader.Ten}"?`)) return
 
   try {
     await ReaderService.delete(reader._id)
-    readers.value = readers.value.filter(r => r._id !== reader._id)
+    loadReaders()
   } catch (error) {
     console.error('Lỗi khi xóa độc giả:', error)
     alert('Xóa độc giả thất bại.')
   }
-}
-
-function getImageUrl(path) {
-  return path.startsWith('http') ? path : `http://localhost:3000/${path}`
 }
 </script>
 

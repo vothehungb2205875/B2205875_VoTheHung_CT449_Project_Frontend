@@ -102,6 +102,8 @@ import MailService from '@/services/mail.service'
 import ReaderService from '@/services/reader.service'
 
 const borrows = ref([])
+const totalBorrows = ref(0)
+
 const search = ref('')
 const currentPage = ref(1)
 const itemsPerPage = ref(5)
@@ -111,42 +113,43 @@ let intervalId = null
 
 onMounted(() => {
   loadBorrows()
-  intervalId = setInterval(loadBorrows, 60000)
+  intervalId = setInterval(loadBorrows, 60000) // tự động reload sau mỗi 1 phút
 })
 
 onBeforeUnmount(() => {
   clearInterval(intervalId)
 })
 
+// Watch khi thay đổi tìm kiếm hoặc dòng/trang
 watch([search, itemsPerPage], () => {
   currentPage.value = 1
+  loadBorrows()
 })
+
+// Watch khi chuyển trang
+watch(currentPage, loadBorrows)
 
 async function loadBorrows() {
   try {
-    borrows.value = await BorrowService.getAll()
+    const params = {
+      q: search.value || undefined,
+      page: currentPage.value,
+      limit: itemsPerPage.value
+    }
+
+    const res = await BorrowService.getFiltered(params)
+    borrows.value = res.data
+    totalBorrows.value = res.total
   } catch (err) {
     console.error('Không thể tải danh sách mượn:', err)
   }
 }
 
-const filteredBorrows = computed(() => {
-  const keyword = search.value.toLowerCase()
-  return borrows.value.filter(b =>
-    Object.values(b).some(v =>
-      v && v.toString().toLowerCase().includes(keyword)
-    )
-  )
-})
-
 const totalPages = computed(() =>
-  Math.ceil(filteredBorrows.value.length / itemsPerPage.value)
+  Math.ceil(totalBorrows.value / itemsPerPage.value)
 )
 
-const paginatedBorrows = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  return filteredBorrows.value.slice(start, start + itemsPerPage.value)
-})
+const paginatedBorrows = computed(() => borrows.value)
 
 function goToPage(page) {
   if (page >= 1 && page <= totalPages.value) {
@@ -171,6 +174,12 @@ function isOverdue(item) {
   return dueDate < today
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return 'Chưa có'
+  const date = new Date(dateStr)
+  return !isNaN(date) ? date.toLocaleDateString('vi-VN') : 'Không hợp lệ'
+}
+
 async function markReturned(item) {
   try {
     await BorrowService.markAsReturned(item._id)
@@ -189,12 +198,6 @@ async function cancelBorrow(item) {
       alert('Không thể hủy mượn')
     }
   }
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return 'Chưa có'
-  const date = new Date(dateStr)
-  return !isNaN(date) ? date.toLocaleDateString('vi-VN') : 'Không hợp lệ'
 }
 
 async function remindReturn(item) {
