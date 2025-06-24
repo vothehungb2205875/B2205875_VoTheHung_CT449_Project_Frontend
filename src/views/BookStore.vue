@@ -100,6 +100,9 @@
         </div>
       </div>
     </main>
+    <div class="section-divider">
+        <img src="/images/asset-957.png" alt="divider" class="img-separator" />
+    </div>
   </div>
 </template>
 
@@ -215,5 +218,18 @@ main {
   top: 80px;
   align-self: flex-start;
   height: fit-content;
+}
+
+.section-divider {
+  display: flex;
+  justify-content: center;
+  margin: 40px 0;
+}
+
+.img-separator {
+  max-width: 1500px;
+  width: 100%;
+  height: auto;
+  opacity: 0.8;
 }
 </style>

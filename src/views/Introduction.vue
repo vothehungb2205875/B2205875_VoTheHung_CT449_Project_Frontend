@@ -77,8 +77,10 @@
           <li><strong>Email:</strong> <a href="mailto:tthl@ctu.edu.vn">tthl@ctu.edu.vn</a></li>
         </ul>
       </section>
+      <div class="section-divider">
+        <img src="/images/asset-957.png" alt="divider" class="img-separator" />
+      </div>
     </div>
-
   </template>
   
   <script setup>
@@ -98,6 +100,19 @@
   img {
     max-width: 100%;
     height: auto;
+  }
+
+  .section-divider {
+    display: flex;
+    justify-content: center;
+    margin: 40px 0;
+  }
+
+  .img-separator {
+    max-width: 1500px;
+    width: 100%;
+    height: auto;
+    opacity: 0.8;
   }
   </style>
   

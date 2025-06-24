@@ -5,10 +5,13 @@
     <main class="content">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
-          <component :is="Component" class="page-wrapper" v-if="Component" />
+          <component
+            :is="Component"
+            class="page-wrapper"
+            :key="$route.fullPath"
+          />
         </transition>
       </router-view>
-
       <MessengerButton v-if="showFloatingButtons" />
       <GoTop v-if="showFloatingButtons" />
     </main>
@@ -16,6 +19,7 @@
     <FooterComponent v-if="showLayout" />
   </div>
 </template>
+
 
 <script setup>
 import { computed } from 'vue';

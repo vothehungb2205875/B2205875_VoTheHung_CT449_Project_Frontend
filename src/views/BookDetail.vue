@@ -81,6 +81,8 @@ import { onMounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BookService from '@/services/book.service'
 import BorrowService from '@/services/borrow.service'
+import { toast } from 'vue3-toastify'
+
 
 const router = useRouter()
 const route = useRoute()
@@ -150,22 +152,18 @@ const goBack = () => router.back()
 const handleBorrow = async () => {
   try {
     if (!user.value || !user.value.MaDocGia) {
-      alert("Vui lòng đăng nhập để mượn sách.");
+      toast.warning("Vui lòng đăng nhập để mượn sách.");
       return;
     }
 
-    // Gọi lịch sử mượn sách từ API
     const borrowHistory = await BorrowService.history(user.value.MaDocGia);
-
-    // Lọc các lượt mượn đang còn hiệu lực (chưa trả)
     const activeBorrows = borrowHistory.filter(b => b.TrangThai === 'Đang mượn');
 
     if (activeBorrows.length >= 3) {
-      alert("Bạn đã có 3 sách đang mượn. Vui lòng trả sách trước khi tiếp tục.");
+      toast.info("Bạn đã có 3 sách đang mượn. Vui lòng trả sách trước khi tiếp tục.");
       return;
     }
 
-    // Nếu hợp lệ, gửi yêu cầu mượn sách
     await BorrowService.create({
       MaSach: book.value.MaSach,
       MaDocGia: user.value.MaDocGia,
@@ -173,21 +171,23 @@ const handleBorrow = async () => {
       NgayTra: new Date(endDate.value)
     });
 
-    alert("Mượn sách thành công");
+    toast.success("✅ Mượn sách thành công");
     book.value = await BookService.get(route.params.id);
     showForm.value = false;
     startDate.value = '';
     endDate.value = '';
     agreed.value = false;
+
   } catch (err) {
     const message = err.response?.data?.message || "Lỗi khi mượn sách";
-    alert(message);
+    toast.error(`❌ ${message}`);
 
     if (message.includes("Vui lòng cập nhật thông tin độc giả")) {
       router.push("/profile");
     }
   }
 };
+
 </script>
 
 <style scoped>

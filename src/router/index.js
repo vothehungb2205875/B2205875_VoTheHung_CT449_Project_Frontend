@@ -8,6 +8,7 @@ import DashBoard from "@/views/DashBoard.vue";
 import Introduction from "@/views/Introduction.vue";
 import BookStore from "@/views/BookStore.vue";
 import QandA from "@/views/QandA.vue";
+import NotFound from "@/views/NotFound.vue";
 
 const routes = [
   { path: "/", name: "home", component: Home },
@@ -33,6 +34,8 @@ const routes = [
     meta: { layout: "none" },
   },
   { path: "/login/success", component: LoginSuccess, meta: { layout: "none" } },
+
+  { path: "/:pathMatch(.*)*", component: NotFound, meta: { layout: "none" } },
 ];
 
 const router = createRouter({

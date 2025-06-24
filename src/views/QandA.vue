@@ -27,6 +27,10 @@
           </div>
         </div>
       </div>
+
+      <div class="section-divider">
+        <img src="/images/asset-957.png" alt="divider" class="img-separator" />
+      </div>
   
       <!-- Quy định và Chính sách -->
       <div class="policy-section">
@@ -95,8 +99,20 @@ function toggle(index) {
 }
 
 .policy-section {
-  border-top: 1px solid #ddd;
   padding-top: 30px;
   margin-top: 40px;
+}
+
+.section-divider {
+  display: flex;
+  justify-content: center;
+  margin: 40px 0;
+}
+
+.img-separator {
+  max-width: 1500px;
+  width: 100%;
+  height: auto;
+  opacity: 0.8;
 }
 </style>
