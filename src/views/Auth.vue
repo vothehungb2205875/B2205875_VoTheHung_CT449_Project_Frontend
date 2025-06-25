@@ -76,6 +76,8 @@
 <script setup>
 import { ref, reactive } from "vue";
 import { useRouter } from "vue-router";
+import { toast } from "vue3-toastify";
+
 import AuthService from "@/services/auth.service";
 
 const router = useRouter();
@@ -119,13 +121,12 @@ const handleLogin = async () => {
       MatKhau: password.value,
     });
 
-    alert("Đăng nhập thành công!");
     localStorage.setItem("user", JSON.stringify(res.user));
     const role = res.user.role;
     router.push(role === "reader" ? "/" : "/dashboard");
   } catch (err) {
     console.error(err);
-    alert("Sai email hoặc mật khẩu.");
+    toast.error("Sai email hoặc mật khẩu.");
   }
 };
 
@@ -209,14 +210,16 @@ const handleRegister = async () => {
     }
 
     await AuthService.register(formData);
-    alert("Đăng ký thành công!");
+    toast.success("Đăng ký thành công!");
     isLogin.value = true;
   } catch (err) {
     console.error(err);
     errors.email = err.response?.data?.message || "Đăng ký thất bại";
+    toast.error(errors.email);
   }
 };
 </script>
+
 
 <style scoped>
 .login-page {

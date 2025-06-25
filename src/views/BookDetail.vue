@@ -171,7 +171,7 @@ const handleBorrow = async () => {
       NgayTra: new Date(endDate.value)
     });
 
-    toast.success("✅ Mượn sách thành công");
+    toast.success("Mượn sách thành công");
     book.value = await BookService.get(route.params.id);
     showForm.value = false;
     startDate.value = '';
@@ -180,7 +180,7 @@ const handleBorrow = async () => {
 
   } catch (err) {
     const message = err.response?.data?.message || "Lỗi khi mượn sách";
-    toast.error(`❌ ${message}`);
+    toast.error(`${message}`);
 
     if (message.includes("Vui lòng cập nhật thông tin độc giả")) {
       router.push("/profile");

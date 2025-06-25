@@ -120,7 +120,7 @@
                             {{ item.TrangThai }}
                           </span>
                           <button
-                            v-if="item.TrangThai === 'Đang mượn'"
+                            v-if="item.TrangThai === 'Đăng ký mượn'"
                             @click="cancelBorrow(item)"
                             class="btn btn-sm btn-outline-danger d-block mt-2"
                           >
@@ -138,12 +138,17 @@
         </template>
       </div>
     </main>
+    <div class="section-divider">
+        <img src="/images/asset-957.png" alt="divider" class="img-separator" />
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { toast } from 'vue3-toastify'
+
 import ReaderService from '@/services/reader.service';
 import authService from '@/services/auth.service';
 import BorrowService from '@/services/borrow.service';
@@ -268,10 +273,10 @@ async function updateProfile() {
     localStorage.setItem('user', JSON.stringify(user.value));
     editing.value = false;
     resetPreview();
-    alert('Cập nhật thành công!');
+    toast.success('Cập nhật thành công!');
   } catch (err) {
     console.error('Lỗi cập nhật:', err);
-    alert('Cập nhật thất bại.');
+    toast.error('Cập nhật thất bại.');
   }
 }
 
@@ -292,16 +297,18 @@ function statusClass(item) {
 }
 
 async function cancelBorrow(item) {
-  if (!confirm('Bạn chắc chắn muốn hủy lượt mượn này?')) return;
+  const confirmCancel = window.confirm('Bạn chắc chắn muốn hủy lượt mượn này?');
+  if (!confirmCancel) return;
   try {
     await BorrowService.cancelBorrow(item._id);
     item.TrangThai = 'Đã hủy';
   } catch (err) {
     console.error('Lỗi hủy lượt mượn:', err);
-    alert('Không thể hủy lượt mượn.');
+    toast.error('Không thể hủy lượt mượn.');
   }
 }
 </script>
+
 
 <style scoped>
 .page-layout {
@@ -312,7 +319,6 @@ async function cancelBorrow(item) {
 
 main {
   flex: 1;
-  background-color: #f8f9fa;
 }
 
 .borrow-history-scroll {
@@ -346,5 +352,18 @@ main {
 .text-danger {
   font-size: 0.875rem;
   color: red;
+}
+
+.section-divider {
+  display: flex;
+  justify-content: center;
+  margin: 40px 0;
+}
+
+.img-separator {
+  max-width: 1500px;
+  width: 100%;
+  height: auto;
+  opacity: 0.8;
 }
 </style>

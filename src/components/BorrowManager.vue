@@ -2,6 +2,7 @@
   <div class="container py-4">
     <h4>Quản lý Mượn sách</h4>
 
+    <!-- Tìm kiếm -->
     <input
       v-model="search"
       type="text"
@@ -9,25 +10,51 @@
       placeholder="Tìm kiếm theo tên, mã sách, trạng thái..."
     />
 
-    <div class="d-flex justify-content-between align-items-end mb-3">
-      <div class="d-flex align-items-center gap-2 ms-auto">
-        <label class="mb-0">Số dòng/trang:</label>
-        <select v-model="itemsPerPage" class="form-select w-auto">
-          <option :value="5">5</option>
-          <option :value="10">10</option>
-          <option :value="20">20</option>
+    <!-- Bộ lọc nâng cao -->
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <input type="date" v-model="filterStart" class="form-control" />
+      </div>
+      <div class="col-md-3">
+        <input type="date" v-model="filterEnd" class="form-control" />
+      </div>
+      <div class="col-md-3">
+        <select v-model="filterStatus" class="form-select">
+          <option value="">-- Tất cả trạng thái --</option>
+          <option>Đăng ký mượn</option>
+          <option>Đang mượn</option>
+          <option>Đã trả</option>
+          <option>Đã hủy</option>
+          <option>Quá hạn</option>
         </select>
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-primary w-100" @click="loadBorrows">Lọc</button>
       </div>
     </div>
 
+    <!-- Số dòng / trang -->
+    <div class="d-flex justify-content-end mb-3">
+      <label class="me-2">Số dòng/trang:</label>
+      <select v-model="itemsPerPage" class="form-select w-auto">
+        <option :value="5">5</option>
+        <option :value="10">10</option>
+        <option :value="20">20</option>
+      </select>
+    </div>
+
+    <!-- Bảng dữ liệu -->
     <div class="table-responsive" style="min-height: 400px;">
       <table class="table table-bordered table-hover table-sm align-middle">
         <thead class="table-light">
           <tr>
-            <th>Độc giả</th>
+            <th>Mã độc giả</th>
+            <th>Tên độc giả</th>
+            <th>SĐT</th>
             <th>Mã sách</th>
             <th>Ngày mượn</th>
-            <th>Ngày trả</th>
+            <th>Hạn trả</th>
+            <th>Ngày trả thực tế</th>
             <th>Trạng thái</th>
             <th>Thao tác</th>
           </tr>
@@ -35,15 +62,26 @@
         <tbody>
           <tr v-for="item in paginatedBorrows" :key="item._id">
             <td>{{ item.MaDocGia }}</td>
+            <td>{{ item.reader?.HoLot }} {{ item.reader?.Ten }}</td>
+            <td>{{ item.reader?.DienThoai || 'N/A' }}</td>
             <td>{{ item.MaSach }}</td>
             <td>{{ formatDate(item.NgayMuon) }}</td>
             <td>{{ formatDate(item.NgayTra) }}</td>
+            <td>{{ formatDate(item.NgayTraTT) }}</td>
             <td>
               <span :class="statusClass(item.TrangThai)">
                 {{ item.TrangThai }}
               </span>
             </td>
             <td class="text-center">
+              <button
+                class="btn btn-sm btn-outline-primary me-2"
+                @click="markAsBorrowed(item)"
+                v-if="item.TrangThai === 'Đăng ký mượn'"
+              >
+                Đã nhận sách
+              </button>
+
               <button
                 class="btn btn-sm btn-outline-success me-2"
                 @click="markReturned(item)"
@@ -54,7 +92,7 @@
               <button
                 class="btn btn-sm btn-outline-danger me-2"
                 @click="cancelBorrow(item)"
-                v-if="item.TrangThai === 'Đang mượn'"
+                v-if="item.TrangThai === 'Đăng ký mượn'"
               >
                 Hủy
               </button>
@@ -74,6 +112,7 @@
       </table>
     </div>
 
+    <!-- Phân trang -->
     <nav class="mt-3">
       <ul class="pagination justify-content-center">
         <li class="page-item" :class="{ disabled: currentPage === 1 }">
@@ -109,24 +148,23 @@ const currentPage = ref(1)
 const itemsPerPage = ref(5)
 const loadingMap = ref({})
 
+// Bộ lọc
+const filterStart = ref('')
+const filterEnd = ref('')
+const filterStatus = ref('')
+
 let intervalId = null
 
 onMounted(() => {
   loadBorrows()
-  intervalId = setInterval(loadBorrows, 60000) // tự động reload sau mỗi 1 phút
+  intervalId = setInterval(loadBorrows, 60000)
 })
+onBeforeUnmount(() => clearInterval(intervalId))
 
-onBeforeUnmount(() => {
-  clearInterval(intervalId)
-})
-
-// Watch khi thay đổi tìm kiếm hoặc dòng/trang
 watch([search, itemsPerPage], () => {
   currentPage.value = 1
   loadBorrows()
 })
-
-// Watch khi chuyển trang
 watch(currentPage, loadBorrows)
 
 async function loadBorrows() {
@@ -134,11 +172,25 @@ async function loadBorrows() {
     const params = {
       q: search.value || undefined,
       page: currentPage.value,
-      limit: itemsPerPage.value
+      limit: itemsPerPage.value,
+      startDate: filterStart.value || undefined,
+      endDate: filterEnd.value || undefined,
+      status: filterStatus.value || undefined,
     }
 
     const res = await BorrowService.getFiltered(params)
-    borrows.value = res.data
+    const borrowList = res.data
+
+    for (const item of borrowList) {
+      try {
+        const reader = await ReaderService.getReaderByMa(item.MaDocGia) // Cải tiến trong tương lai, dùng lookup
+        item.reader = reader
+      } catch {
+        item.reader = null
+      }
+    }
+
+    borrows.value = borrowList
     totalBorrows.value = res.total
   } catch (err) {
     console.error('Không thể tải danh sách mượn:', err)
@@ -148,7 +200,6 @@ async function loadBorrows() {
 const totalPages = computed(() =>
   Math.ceil(totalBorrows.value / itemsPerPage.value)
 )
-
 const paginatedBorrows = computed(() => borrows.value)
 
 function goToPage(page) {
@@ -159,7 +210,7 @@ function goToPage(page) {
 
 function statusClass(status) {
   return {
-    'badge bg-secondary': status === 'Chưa trả',
+    'badge bg-secondary': status === 'Chưa trả' || status === 'Đăng ký mượn',
     'badge bg-success': status === 'Đã trả',
     'badge bg-danger': status === 'Đã hủy',
     'badge bg-primary': status === 'Đang mượn',
@@ -169,9 +220,7 @@ function statusClass(status) {
 
 function isOverdue(item) {
   if (item.TrangThai !== 'Đang mượn' || !item.NgayTra) return false
-  const today = new Date()
-  const dueDate = new Date(item.NgayTra)
-  return dueDate < today
+  return new Date(item.NgayTra) < new Date()
 }
 
 function formatDate(dateStr) {
@@ -184,7 +233,8 @@ async function markReturned(item) {
   try {
     await BorrowService.markAsReturned(item._id)
     item.TrangThai = 'Đã trả'
-  } catch (err) {
+    item.NgayTraTT = new Date()
+  } catch {
     alert('Không thể cập nhật trạng thái')
   }
 }
@@ -194,9 +244,18 @@ async function cancelBorrow(item) {
     try {
       await BorrowService.cancelBorrow(item._id)
       item.TrangThai = 'Đã hủy'
-    } catch (err) {
+    } catch {
       alert('Không thể hủy mượn')
     }
+  }
+}
+
+async function markAsBorrowed(item) {
+  try {
+    await BorrowService.markAsBorrowed(item._id)
+    item.TrangThai = 'Đang mượn'
+  } catch {
+    alert('Không thể cập nhật trạng thái sang "Đang mượn"')
   }
 }
 
@@ -204,23 +263,15 @@ async function remindReturn(item) {
   loadingMap.value[item._id] = true
   try {
     const reader = await ReaderService.getReaderByMa(item.MaDocGia)
-
-    if (!reader || !reader.email) {
-      alert('Không tìm thấy email độc giả!')
-      return
-    }
-
-    const payload = {
+    if (!reader || !reader.email) return alert('Không tìm thấy email độc giả!')
+    await MailService.sendReminder({
       to: reader.email,
-      readerName: reader.HoTen || reader.Ten || 'Độc giả',
+      readerName: reader.Ten || 'Độc giả',
       bookCode: item.MaSach,
       dueDate: formatDate(item.NgayTra),
-    }
-
-    await MailService.sendReminder(payload)
+    })
     await BorrowService.markAsReminded(item._id)
     item.TrangThai = 'Quá hạn'
-
     alert(`Đã gửi email nhắc trả đến: ${reader.email}`)
   } catch (err) {
     console.error(err)
@@ -236,13 +287,11 @@ async function remindReturn(item) {
   font-size: 0.8rem;
   padding: 0.4em 0.6em;
 }
-
 .blinking {
   animation: blink 1s infinite;
   border-color: rgb(255, 162, 0);
   color: rgb(0, 0, 0);
 }
-
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.2; }

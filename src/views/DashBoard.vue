@@ -5,14 +5,24 @@
       <h2>Dash Board</h2>
       <p>Xin chào {{ staff?.HoTenNV || 'ADMIN' }}</p>
       <ul>
-        <li @click="currentView = 'books'" :class="{ active: currentView === 'books' }">📚 Quản lý Sách</li>
-        <li @click="currentView = 'readers'" :class="{ active: currentView === 'readers' }">👤 Độc giả</li>
-        <li @click="currentView = 'borrowings'" :class="{ active: currentView === 'borrowings' }">🔄 Mượn sách</li>
-        <li @click="currentView = 'notify'" :class="{ active: currentView === 'notify' }">
-          📰 Quản lý Thông báo
+        <li @click="currentView = 'books'" :class="{ active: currentView === 'books' }">
+          <font-awesome-icon :icon="['fas', 'book']" /> Quản lý Sách
         </li>
-        <li @click="currentView = 'statistics'" :class="{ active: currentView === 'statistics' }">📈 Thống kê</li>
-        <li @click.prevent="logout">🚪 Đăng xuất</li>
+        <li @click="currentView = 'readers'" :class="{ active: currentView === 'readers' }">
+          <font-awesome-icon :icon="['fas', 'book-open-reader']" /> Độc giả
+        </li>
+        <li @click="currentView = 'borrowings'" :class="{ active: currentView === 'borrowings' }">
+          <font-awesome-icon :icon="['fas', 'arrows-rotate']" /> Quản lý mượn sách
+        </li>
+        <li @click="currentView = 'notify'" :class="{ active: currentView === 'notify' }">
+          <font-awesome-icon :icon="['fas', 'calendar']" /> Quản lý Thông báo
+        </li>
+        <li @click="currentView = 'statistics'" :class="{ active: currentView === 'statistics' }">
+          <font-awesome-icon :icon="['fas', 'chart-simple']" /> Thống kê
+        </li>
+        <li @click.prevent="logout">
+          <font-awesome-icon :icon="['fas', 'right-from-bracket']" /> Đăng xuất
+        </li>
       </ul>
     </aside>
 

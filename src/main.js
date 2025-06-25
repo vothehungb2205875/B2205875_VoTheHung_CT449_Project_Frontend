@@ -25,6 +25,9 @@ import {
   faPhone,
   faFax,
   faEnvelope,
+  faBook,
+  faCalendar,
+  faChartSimple,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faFacebook,
@@ -49,7 +52,10 @@ library.add(
   faLocationDot,
   faPhone,
   faFax,
-  faEnvelope
+  faEnvelope,
+  faBook,
+  faCalendar,
+  faChartSimple
 );
 
 /* Tạo app */
