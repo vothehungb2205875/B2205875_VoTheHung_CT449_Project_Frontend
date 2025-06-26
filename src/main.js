@@ -28,6 +28,7 @@ import {
   faBook,
   faCalendar,
   faChartSimple,
+  faBuilding,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faFacebook,
@@ -55,7 +56,8 @@ library.add(
   faEnvelope,
   faBook,
   faCalendar,
-  faChartSimple
+  faChartSimple,
+  faBuilding
 );
 
 /* Tạo app */

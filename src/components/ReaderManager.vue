@@ -2,13 +2,18 @@
   <div class="container py-4">
     <h4>Quản lý Độc giả</h4>
 
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item">
+        <a class="nav-link" :class="{ active: currentTab === 'active' }" href="#" @click.prevent="switchTab('active')">Hoạt động</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" :class="{ active: currentTab === 'inactive' }" href="#" @click.prevent="switchTab('inactive')">Đã vô hiệu hóa</a>
+      </li>
+    </ul>
+
     <!-- Tìm kiếm -->
-    <input
-      type="text"
-      v-model="search"
-      class="form-control my-3"
-      placeholder="Tìm kiếm độc giả..."
-    />
+    <input type="text" v-model="search" class="form-control my-3" placeholder="Tìm kiếm độc giả..." />
 
     <div class="d-flex justify-content-between align-items-center mb-3">
       <button class="btn btn-primary" @click="addReader">Thêm độc giả</button>
@@ -47,16 +52,14 @@
             <td>{{ reader.email }}</td>
             <td>{{ reader.DienThoai }}</td>
             <td class="text-center">
-              <img
-                v-if="reader.avatar"
-                :src="getImageUrl(reader.avatar)"
-                class="avatar-img rounded-circle"
-                alt="Avatar"
-              />
+              <img v-if="reader.avatar" :src="getImageUrl(reader.avatar)" class="avatar-img rounded-circle" alt="Avatar" />
             </td>
             <td class="text-center">
-              <button class="btn btn-sm btn-outline-primary me-2" @click="editReader(reader)">Sửa</button>
-              <button class="btn btn-sm btn-outline-danger" @click="deleteReader(reader)">Xóa</button>
+              <button class="btn btn-sm" :class="currentTab === 'inactive' ? 'btn-outline-success' : 'btn-outline-primary me-2'" 
+                      @click="currentTab === 'inactive' ? restoreReader(reader) : editReader(reader)">
+                {{ currentTab === 'inactive' ? 'Khôi phục' : 'Sửa' }}
+              </button>
+              <button v-if="currentTab === 'active'" class="btn btn-sm btn-outline-danger" @click="deleteReader(reader)">Vô hiệu hóa</button>
             </td>
           </tr>
         </tbody>
@@ -69,12 +72,7 @@
         <li class="page-item" :class="{ disabled: currentPage === 1 }">
           <button class="page-link" @click="goToPage(currentPage - 1)">«</button>
         </li>
-        <li
-          class="page-item"
-          v-for="page in totalPages"
-          :key="page"
-          :class="{ active: currentPage === page }"
-        >
+        <li class="page-item" v-for="page in totalPages" :key="page" :class="{ active: currentPage === page }">
           <button class="page-link" @click="goToPage(page)">{{ page }}</button>
         </li>
         <li class="page-item" :class="{ disabled: currentPage === totalPages }">
@@ -84,12 +82,7 @@
     </nav>
 
     <!-- Modal -->
-    <ReaderFormModal
-      v-model="showModal"
-      :reader="selectedReader"
-      :mode="modalMode"
-      @save="handleSave"
-    />
+    <ReaderFormModal v-model="showModal" :reader="selectedReader" :mode="modalMode" @save="handleSave" />
   </div>
 </template>
 
@@ -104,17 +97,24 @@ const search = ref('')
 const showModal = ref(false)
 const selectedReader = ref(null)
 const modalMode = ref('add')
+const currentTab = ref('active')
 
 const currentPage = ref(1)
 const itemsPerPage = ref(5)
 
-// Tải danh sách từ BE (phân trang + tìm kiếm)
+function switchTab(tab) {
+  currentTab.value = tab
+  currentPage.value = 1
+  loadReaders()
+}
+
 async function loadReaders() {
   try {
     const params = {
       q: search.value || undefined,
       page: currentPage.value,
-      limit: itemsPerPage.value
+      limit: itemsPerPage.value,
+      TrangThai: currentTab.value === 'inactive' ? 'Vô hiệu hóa' : undefined
     }
 
     const res = await ReaderService.getFiltered(params)
@@ -125,54 +125,25 @@ async function loadReaders() {
   }
 }
 
-// Khởi động
 onMounted(loadReaders)
-
-// Khi tìm kiếm hoặc đổi số dòng
-watch([search, itemsPerPage], () => {
-  currentPage.value = 1
-  loadReaders()
-})
-
-// Khi chuyển trang
+watch([search, itemsPerPage], () => { currentPage.value = 1; loadReaders() })
 watch(currentPage, loadReaders)
 
-const totalPages = computed(() =>
-  Math.ceil(totalReaders.value / itemsPerPage.value)
-)
-
-function goToPage(page) {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-  }
-}
-
-function getImageUrl(path) {
-  return path.startsWith('http') ? path : `http://localhost:3000/${path}`
-}
-
-function addReader() {
-  selectedReader.value = null
-  modalMode.value = 'add'
-  showModal.value = true
-}
-
-function editReader(reader) {
-  selectedReader.value = { ...reader }
-  modalMode.value = 'edit'
-  showModal.value = true
-}
+const totalPages = computed(() => Math.ceil(totalReaders.value / itemsPerPage.value))
+function goToPage(page) { if (page >= 1 && page <= totalPages.value) currentPage.value = page }
+function getImageUrl(path) { return path.startsWith('http') ? path : `http://localhost:3000/${path}` }
+function addReader() { selectedReader.value = null; modalMode.value = 'add'; showModal.value = true }
+function editReader(reader) { selectedReader.value = { ...reader }; modalMode.value = 'edit'; showModal.value = true }
 
 async function handleSave(readerFormData) {
   try {
     if (modalMode.value === 'add') {
-      const newReader = await ReaderService.create(readerFormData)
-      loadReaders()
+      await ReaderService.create(readerFormData)
       alert("Thêm độc giả thành công")
     } else if (modalMode.value === 'edit' && selectedReader.value?._id) {
-      const updated = await ReaderService.update(selectedReader.value._id, readerFormData)
-      loadReaders()
+      await ReaderService.update(selectedReader.value._id, readerFormData)
     }
+    loadReaders()
   } catch (e) {
     console.error('Lỗi khi lưu độc giả:', e)
     alert('Không thể lưu độc giả.')
@@ -180,33 +151,41 @@ async function handleSave(readerFormData) {
 }
 
 async function deleteReader(reader) {
-  if (!confirm(`Xác nhận xóa độc giả "${reader.Ten}"?`)) return
+  if (!confirm(`Xác nhận vô hiệu hóa độc giả "${reader.Ten}"?`)) return
 
   try {
-    await ReaderService.delete(reader._id)
+    await ReaderService.update(reader._id, { TrangThai: 'Vô hiệu hóa' })
     loadReaders()
   } catch (error) {
-    console.error('Lỗi khi xóa độc giả:', error)
-    alert('Xóa độc giả thất bại.')
+    console.error('Lỗi khi vô hiệu hóa độc giả:', error)
+    alert('Vô hiệu hóa độc giả thất bại.')
+  }
+}
+
+async function restoreReader(reader) {
+  if (!confirm(`Khôi phục độc giả "${reader.Ten}"?`)) return
+
+  try {
+    await ReaderService.update(reader._id, { TrangThai: 'Hoạt động' })
+    loadReaders()
+  } catch (error) {
+    console.error('Lỗi khi khôi phục độc giả:', error)
+    alert('Khôi phục độc giả thất bại.')
   }
 }
 </script>
 
 <style scoped>
-.table td,
-.table th {
+.table td, .table th {
   vertical-align: middle;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 th:nth-child(1), td:nth-child(1) { width: 80px; }
 th:nth-child(2), td:nth-child(2),
 th:nth-child(3), td:nth-child(3),
-th:nth-child(5), td:nth-child(5) {
-  max-width: 180px;
-}
+th:nth-child(5), td:nth-child(5) { max-width: 180px; }
 th:nth-child(4), td:nth-child(4) { width: 110px; }
 th:nth-child(6), td:nth-child(6) { width: 120px; }
 th:nth-child(7), td:nth-child(7) { width: 70px; text-align: center; }

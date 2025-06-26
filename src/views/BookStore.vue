@@ -26,82 +26,73 @@
 
           <!-- Nội dung chính -->
           <div class="col-md-10">
-            <!-- Hiển thị spinner khi đang tải -->
-            <div v-if="isLoading" class="text-center py-5">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Đang tải...</span>
+            <div class="row booklist">
+              <div
+                class="col-6 col-md-3 mb-4"
+                v-for="book in paginatedBooks"
+                :key="book._id"
+              >
+                <router-link
+                  :to="`/books/${book._id}`"
+                  class="text-decoration-none text-dark"
+                >
+                  <div class="card h-100 text-center shadow-sm border-0">
+                    <img
+                      :src="`http://localhost:3000/${book.BiaSach}`"
+                      class="book-cover card-img-top"
+                    />
+                    <div class="card-body p-2">
+                      <h6 class="book-title text-truncate fw-semibold mb-1">
+                        {{ book.TenSach }}
+                      </h6>
+                      <div class="book-author text-muted small">
+                        Tác giả: {{ book.TacGia }}
+                      </div>
+                      <div
+                        class="book-stock small"
+                        :class="{
+                          'text-success': book.SoQuyen > 0,
+                          'text-danger': book.SoQuyen === 0
+                        }"
+                      >
+                        Còn: {{ book.SoQuyen }}
+                      </div>
+                    </div>
+                  </div>
+                </router-link>
               </div>
             </div>
 
-            <!-- Danh sách sách -->
-            <div v-else>
-              <div class="row booklist">
-                <div
-                  class="col-6 col-md-3 mb-4"
-                  v-for="book in paginatedBooks"
-                  :key="book._id"
-                >
-                  <router-link
-                    :to="`/books/${book._id}`"
-                    class="text-decoration-none text-dark"
+            <!-- Phân trang -->
+            <div class="d-flex justify-content-center mt-4" v-if="totalPages > 1">
+              <nav>
+                <ul class="pagination">
+                  <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                    <button class="page-link" @click="goToPage(currentPage - 1)">«</button>
+                  </li>
+                  <li
+                    class="page-item"
+                    v-for="page in totalPages"
+                    :key="page"
+                    :class="{ active: currentPage === page }"
                   >
-                    <div class="card h-100 text-center shadow-sm border-0">
-                      <img
-                        :src="`http://localhost:3000/${book.BiaSach}`"
-                        class="book-cover card-img-top"
-                      />
-                      <div class="card-body p-2">
-                        <h6 class="book-title text-truncate fw-semibold mb-1">
-                          {{ book.TenSach }}
-                        </h6>
-                        <div class="book-author text-muted small">
-                          Tác giả: {{ book.TacGia }}
-                        </div>
-                        <div
-                          class="book-stock small"
-                          :class="{
-                            'text-success': book.SoQuyen > 0,
-                            'text-danger': book.SoQuyen === 0
-                          }"
-                        >
-                          Còn: {{ book.SoQuyen }}
-                        </div>
-                      </div>
-                    </div>
-                  </router-link>
-                </div>
-              </div>
-
-              <!-- Phân trang -->
-              <div class="d-flex justify-content-center mt-4" v-if="totalPages > 1">
-                <nav>
-                  <ul class="pagination">
-                    <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                      <button class="page-link" @click="goToPage(currentPage - 1)">«</button>
-                    </li>
-                    <li
-                      class="page-item"
-                      v-for="page in totalPages"
-                      :key="page"
-                      :class="{ active: currentPage === page }"
-                    >
-                      <button class="page-link" @click="goToPage(page)">
-                        {{ page }}
-                      </button>
-                    </li>
-                    <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                      <button class="page-link" @click="goToPage(currentPage + 1)">»</button>
-                    </li>
-                  </ul>
-                </nav>
-              </div>
+                    <button class="page-link" @click="goToPage(page)">
+                      {{ page }}
+                    </button>
+                  </li>
+                  <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+                    <button class="page-link" @click="goToPage(currentPage + 1)">»</button>
+                  </li>
+                </ul>
+              </nav>
             </div>
           </div>
         </div>
       </div>
     </main>
+
     <div class="section-divider">
-        <img src="/images/asset-957.png" alt="divider" class="img-separator" />
+      <img src="/images/asset-957.png" alt="divider" class="img-separator" />
     </div>
   </div>
 </template>
@@ -109,6 +100,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import debounce from 'lodash/debounce'
 import BookService from '@/services/book.service'
 
 const route = useRoute()
@@ -128,10 +120,8 @@ const books = ref([])
 const totalBooks = ref(0)
 const currentPage = ref(1)
 const booksPerPage = 12
-const isLoading = ref(false)
 
-const fetchBooks = async () => {
-  isLoading.value = true
+async function fetchBooks() {
   try {
     const params = {
       q: searchQuery.value || undefined,
@@ -145,24 +135,26 @@ const fetchBooks = async () => {
     totalBooks.value = response.total
   } catch (err) {
     console.error('Lỗi khi tải danh sách sách:', err)
-  } finally {
-    isLoading.value = false
   }
 }
 
+// Gọi khi khởi tạo
 onMounted(fetchBooks)
 
-watch([searchQuery, selectedGenre], () => {
+// Tạo phiên bản debounce
+const debouncedFetch = debounce(() => {
+  currentPage.value = 1
   router.replace({
     query: {
       q: searchQuery.value || undefined,
       genre: selectedGenre.value || undefined
     }
   })
-
-  currentPage.value = 1
   fetchBooks()
-})
+}, 400)
+
+// Theo dõi thay đổi input
+watch([searchQuery, selectedGenre], debouncedFetch)
 
 watch(currentPage, fetchBooks)
 

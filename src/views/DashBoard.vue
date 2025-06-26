@@ -14,6 +14,9 @@
         <li @click="currentView = 'borrowings'" :class="{ active: currentView === 'borrowings' }">
           <font-awesome-icon :icon="['fas', 'arrows-rotate']" /> Quản lý mượn sách
         </li>
+        <li @click="currentView = 'publishers'" :class="{ active: currentView === 'publishers' }">
+          <font-awesome-icon :icon="['fas', 'building']" /> Quản lý NXB
+        </li>
         <li @click="currentView = 'notify'" :class="{ active: currentView === 'notify' }">
           <font-awesome-icon :icon="['fas', 'calendar']" /> Quản lý Thông báo
         </li>
@@ -49,6 +52,7 @@ import { useRouter } from 'vue-router'
 import BookManager from '@/components/BookManager.vue'
 import ReaderManager from '@/components/ReaderManager.vue'
 import BorrowManager from '@/components/BorrowManager.vue'
+import PublisherManager from '@/components/PublisherManager.vue'
 import Statistics from '@/components/Statistics.vue'
 import AuthService from '@/services/auth.service.js'
 import StaffService from '@/services/staff.service.js'
@@ -65,6 +69,7 @@ const currentViewComponent = computed(() => {
     books: BookManager,
     readers: ReaderManager,
     borrowings: BorrowManager,
+    publishers: PublisherManager,
     statistics: Statistics,
     notify: NotifyManager,
   }[currentView.value];

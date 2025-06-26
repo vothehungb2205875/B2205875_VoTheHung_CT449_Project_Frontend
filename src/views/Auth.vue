@@ -74,13 +74,14 @@
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
-import { useRouter } from "vue-router";
+import { ref, reactive, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { toast } from "vue3-toastify";
 
 import AuthService from "@/services/auth.service";
 
 const router = useRouter();
+const route = useRoute();
 
 const isLogin = ref(true);
 const email = ref("");
@@ -126,7 +127,11 @@ const handleLogin = async () => {
     router.push(role === "reader" ? "/" : "/dashboard");
   } catch (err) {
     console.error(err);
-    toast.error("Sai email hoặc mật khẩu.");
+
+    const msg =
+      err.response?.data?.message || err.response?.data || "Sai email hoặc mật khẩu.";
+
+    toast.error(msg);
   }
 };
 
@@ -218,8 +223,24 @@ const handleRegister = async () => {
     toast.error(errors.email);
   }
 };
-</script>
 
+onMounted(() => {
+  const error = route.query.error;
+  if (error) {
+    if (error === "vohieuhoa") {
+      toast.error("Tài khoản của bạn đã bị vô hiệu hóa!");
+    } else if (error === "server") {
+      toast.error("Đăng nhập Google thất bại. Vui lòng thử lại.");
+    }
+
+    // Đợi 3s rồi mới xóa query, để toast có thời gian hiển thị
+    setTimeout(() => {
+      router.replace({ query: {} });
+    }, 3000);
+  }
+});
+
+</script>
 
 <style scoped>
 .login-page {

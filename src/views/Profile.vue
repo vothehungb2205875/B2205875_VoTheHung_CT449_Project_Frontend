@@ -169,7 +169,7 @@ const profileErrors = reactive({
 
 const fields = {
   HoLot: 'Họ lót', Ten: 'Tên', NgaySinh: 'Ngày sinh', Phai: 'Phái',
-  DiaChi: 'Địa chỉ', DienThoai: 'Điện thoại', name: 'Tên hiển thị', email: 'Email'
+  DiaChi: 'Địa chỉ', DienThoai: 'Điện thoại', email: 'Email'
 };
 
 onMounted(async () => {

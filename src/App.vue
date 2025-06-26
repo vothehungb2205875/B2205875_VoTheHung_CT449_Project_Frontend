@@ -5,11 +5,7 @@
     <main class="content">
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
-          <component
-            :is="Component"
-            class="page-wrapper"
-            :key="$route.fullPath"
-          />
+          <component :is="Component" :key="$route.path" />
         </transition>
       </router-view>
       <MessengerButton v-if="showFloatingButtons" />

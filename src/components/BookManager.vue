@@ -2,6 +2,20 @@
   <div class="container py-4">
     <h4>Quản lý Sách</h4>
 
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item">
+        <a class="nav-link" :class="{ active: currentTab === 'active' }" href="#" @click.prevent="switchTab('active')">
+          Sách đang hoạt động
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" :class="{ active: currentTab === 'deleted' }" href="#" @click.prevent="switchTab('deleted')">
+          Đã xóa
+        </a>
+      </li>
+    </ul>
+
     <!-- Tìm kiếm -->
     <input
       type="text"
@@ -49,17 +63,14 @@
             <td>{{ book.NamXuatBan }}</td>
             <td class="truncate" :title="book.TheLoai">{{ book.TheLoai }}</td>
             <td class="text-center">
-              <img
-                v-if="book.BiaSach"
-                :src="getImageUrl(book.BiaSach)"
-                alt="Bìa"
-                class="book-cover"
-                loading="lazy"
-              />
+              <img v-if="book.BiaSach" :src="getImageUrl(book.BiaSach)" alt="Bìa" class="book-cover" loading="lazy" />
             </td>
             <td class="text-center">
-              <button class="btn btn-sm btn-outline-primary me-2" @click="editBook(book)">Sửa</button>
-              <button class="btn btn-sm btn-outline-danger" @click="deleteBook(book)">Xóa</button>
+              <button class="btn btn-sm" :class="currentTab === 'deleted' ? 'btn-outline-success' : 'btn-outline-primary me-2'"
+                      @click="currentTab === 'deleted' ? restoreBook(book) : editBook(book)">
+                {{ currentTab === 'deleted' ? 'Khôi phục' : 'Sửa' }}
+              </button>
+              <button v-if="currentTab !== 'deleted'" class="btn btn-sm btn-outline-danger" @click="deleteBook(book)">Xóa</button>
             </td>
           </tr>
         </tbody>
@@ -72,12 +83,7 @@
         <li class="page-item" :class="{ disabled: currentPage === 1 }">
           <button class="page-link" @click="goToPage(currentPage - 1)">«</button>
         </li>
-        <li
-          class="page-item"
-          v-for="page in totalPages"
-          :key="page"
-          :class="{ active: currentPage === page }"
-        >
+        <li class="page-item" v-for="page in totalPages" :key="page" :class="{ active: currentPage === page }">
           <button class="page-link" @click="goToPage(page)">{{ page }}</button>
         </li>
         <li class="page-item" :class="{ disabled: currentPage === totalPages }">
@@ -87,12 +93,7 @@
     </nav>
 
     <!-- Modal -->
-    <BookFormModal
-      v-model="showModal"
-      :book="selectedBook"
-      :mode="modalMode"
-      @save="handleSave"
-    /> <!--Truyền dữ liệu xuống component con, nhận sự kiện gửi lên-->
+    <BookFormModal v-model="showModal" :book="selectedBook" :mode="modalMode" @save="handleSave" />
   </div>
 </template>
 
@@ -107,20 +108,25 @@ const search = ref('')
 const showModal = ref(false)
 const selectedBook = ref(null)
 const modalMode = ref('add')
+const currentTab = ref('active')
 
-// Phân trang
 const currentPage = ref(1)
 const itemsPerPage = ref(5)
 
-// Gọi dữ liệu từ BE
+function switchTab(tab) {
+  currentTab.value = tab
+  currentPage.value = 1
+  loadBooks()
+}
+
 async function loadBooks() {
   try {
     const params = {
       q: search.value || undefined,
       page: currentPage.value,
-      limit: itemsPerPage.value
+      limit: itemsPerPage.value,
+      TrangThai: currentTab.value === 'deleted' ? 'Đã xóa' : undefined,
     }
-
     const res = await BookService.getFiltered(params)
     books.value = res.data
     totalBooks.value = res.total
@@ -129,59 +135,28 @@ async function loadBooks() {
   }
 }
 
-// Khi khởi động
 onMounted(loadBooks)
-
-// Gọi lại khi tìm kiếm hoặc thay đổi số dòng/trang
-watch([search, itemsPerPage], () => {
-  currentPage.value = 1
-  loadBooks()
-})
-
-// Gọi lại khi chuyển trang
+watch([search, itemsPerPage], () => { currentPage.value = 1; loadBooks() })
 watch(currentPage, loadBooks)
 
-const totalPages = computed(() =>
-  Math.ceil(totalBooks.value / itemsPerPage.value)
-)
-
-function goToPage(page) {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-  }
-}
-
-function getImageUrl(path) {
-  return `http://localhost:3000/${path}`
-}
-
-function addBook() {
-  selectedBook.value = null
-  modalMode.value = 'add'
-  showModal.value = true
-}
-
-function editBook(book) {
-  selectedBook.value = { ...book }
-  modalMode.value = 'edit'
-  showModal.value = true
-}
+const totalPages = computed(() => Math.ceil(totalBooks.value / itemsPerPage.value))
+function goToPage(page) { if (page >= 1 && page <= totalPages.value) currentPage.value = page }
+function getImageUrl(path) { return `http://localhost:3000/${path}` }
+function addBook() { selectedBook.value = null; modalMode.value = 'add'; showModal.value = true }
+function editBook(book) { selectedBook.value = { ...book }; modalMode.value = 'edit'; showModal.value = true }
 
 async function handleSave(book) {
   try {
     const formData = new FormData()
-    for (const key in book) {
-      formData.append(key, book[key])
-    }
+    for (const key in book) formData.append(key, book[key])
 
     if (modalMode.value === 'add') {
-      const newBook = await BookService.create(formData)
-      loadBooks() // reload lại danh sách
-      alert("Thêm sách thành công")
+      await BookService.create(formData)
+      alert('Thêm sách thành công')
     } else if (modalMode.value === 'edit' && book._id) {
-      const res = await BookService.update(book._id, formData)
-      loadBooks() // reload lại danh sách
+      await BookService.update(book._id, formData)
     }
+    loadBooks()
   } catch (e) {
     console.error('Lỗi khi lưu:', e)
     alert('Không thể lưu sách.')
@@ -190,58 +165,43 @@ async function handleSave(book) {
 
 async function deleteBook(book) {
   if (!confirm(`Xác nhận xóa "${book.TenSach}"?`)) return
-
   try {
-    await BookService.delete(book._id)
-    loadBooks() // cập nhật lại danh sách
-  } catch (error) {
-    console.error('Lỗi khi xóa sách:', error)
+    await BookService.update(book._id, { TrangThai: 'Đã xóa' })
+    loadBooks()
+  } catch (e) {
+    console.error('Lỗi khi xóa sách:', e)
     alert('Xóa sách thất bại.')
+  }
+}
+
+async function restoreBook(book) {
+  if (!confirm(`Khôi phục sách "${book.TenSach}"?`)) return
+  try {
+    await BookService.update(book._id, { TrangThai: 'Hoạt động' })
+    loadBooks()
+  } catch (e) {
+    console.error('Lỗi khi khôi phục sách:', e)
+    alert('Khôi phục thất bại.')
   }
 }
 </script>
 
-
 <style scoped>
-.table td,
-.table th {
+.table td, .table th {
   vertical-align: middle;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-/* Định dạng chiều rộng cột */
 th:nth-child(1), td:nth-child(1) { width: 80px; }
 th:nth-child(2), td:nth-child(2),
 th:nth-child(3), td:nth-child(3),
-th:nth-child(7), td:nth-child(7) {
-  max-width: 200px;
-}
-
+th:nth-child(7), td:nth-child(7) { max-width: 200px; }
 th:nth-child(4), td:nth-child(4) { width: 100px; }
 th:nth-child(5), td:nth-child(5) { width: 90px; }
 th:nth-child(6), td:nth-child(6) { width: 90px; }
-th:nth-child(8), td:nth-child(8) {
-  width: 60px;
-  text-align: center;
-}
+th:nth-child(8), td:nth-child(8) { width: 60px; text-align: center; }
 th:nth-child(9), td:nth-child(9) { width: 130px; }
-
-/* Dành cho các ô bị cắt ngắn */
-.truncate {
-  max-width: 200px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-/* Ảnh bìa */
-.book-cover {
-  width: 50px;
-  height: 70px;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto;
-}
+.truncate { max-width: 200px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.book-cover { width: 50px; height: 70px; object-fit: contain; display: block; margin: 0 auto; }
 </style>
