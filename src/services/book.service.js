@@ -52,6 +52,10 @@ class BookService {
   async getFiltered(params) {
     return (await this.api.get("/", { params })).data;
   }
+
+  async getFilters() {
+    return (await this.api.get("/filters")).data;
+  }
 }
 
 export default new BookService();

@@ -10,20 +10,20 @@
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" :class="{ active: currentTab === 'deleted' }" href="#" @click.prevent="switchTab('deleted')">
+        <a class="nav-link" :class="{ active: currentTab === 'deleted' }" href="#"
+          @click.prevent="switchTab('deleted')">
           Đã xóa
         </a>
       </li>
     </ul>
 
     <!-- Tìm kiếm -->
-    <input
-      type="text"
-      v-model="search"
-      class="form-control my-3"
-      placeholder="Tìm kiếm sách..."
-    />
+    <input type="text" v-model="search" class="form-control my-3" placeholder="Tìm kiếm sách..." />
 
+    <!-- Bộ lọc nâng cao -->
+    <BookFilters v-model="filter" :genres="genres" :nxbs="nxbs" />
+
+    <!-- Button và paging -->
     <div class="d-flex justify-content-between align-items-center mb-3">
       <button class="btn btn-primary" @click="addBook">Thêm sách</button>
 
@@ -37,7 +37,7 @@
       </div>
     </div>
 
-    <!-- Bảng dữ liệu -->
+    <!-- Table -->
     <div class="table-responsive" style="min-height: 400px;">
       <table class="table table-bordered table-hover table-sm align-middle">
         <thead class="table-light">
@@ -63,21 +63,23 @@
             <td>{{ book.NamXuatBan }}</td>
             <td class="truncate" :title="book.TheLoai">{{ book.TheLoai }}</td>
             <td class="text-center">
-              <img v-if="book.BiaSach" :src="getImageUrl(book.BiaSach)" alt="Bìa" class="book-cover" loading="lazy" />
+              <img v-if="book.BiaSach" :src="getImageUrl(book.BiaSach)" class="book-cover" alt="Bìa" loading="lazy" />
             </td>
             <td class="text-center">
-              <button class="btn btn-sm" :class="currentTab === 'deleted' ? 'btn-outline-success' : 'btn-outline-primary me-2'"
-                      @click="currentTab === 'deleted' ? restoreBook(book) : editBook(book)">
+              <button class="btn btn-sm"
+                :class="currentTab === 'deleted' ? 'btn-outline-success' : 'btn-outline-primary me-2'"
+                @click="currentTab === 'deleted' ? restoreBook(book) : editBook(book)">
                 {{ currentTab === 'deleted' ? 'Khôi phục' : 'Sửa' }}
               </button>
-              <button v-if="currentTab !== 'deleted'" class="btn btn-sm btn-outline-danger" @click="deleteBook(book)">Xóa</button>
+              <button v-if="currentTab !== 'deleted'" class="btn btn-sm btn-outline-danger"
+                @click="deleteBook(book)">Xóa</button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Phân trang -->
+    <!-- Pagination -->
     <nav class="mt-3">
       <ul class="pagination justify-content-center">
         <li class="page-item" :class="{ disabled: currentPage === 1 }">
@@ -92,31 +94,38 @@
       </ul>
     </nav>
 
-    <!-- Modal -->
     <BookFormModal v-model="showModal" :book="selectedBook" :mode="modalMode" @save="handleSave" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import BookService from '@/services/book.service'
-import BookFormModal from '@/components/BookFormModal.vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue';
+import BookService from '@/services/book.service';
+import BookFormModal from '@/components/BookFormModal.vue';
+import BookFilters from '@/components/BookFilters.vue';
 
-const books = ref([])
-const totalBooks = ref(0)
-const search = ref('')
-const showModal = ref(false)
-const selectedBook = ref(null)
-const modalMode = ref('add')
-const currentTab = ref('active')
+const books = ref([]);
+const totalBooks = ref(0);
+const search = ref('');
+const showModal = ref(false);
+const selectedBook = ref(null);
+const modalMode = ref('add');
+const currentTab = ref('active');
+const currentPage = ref(1);
+const itemsPerPage = ref(5);
 
-const currentPage = ref(1)
-const itemsPerPage = ref(5)
+const filter = reactive({
+  genre: '',
+  nxb: '',
+  year: ''
+});
+const genres = ref([]);
+const nxbs = ref([]);
 
 function switchTab(tab) {
-  currentTab.value = tab
-  currentPage.value = 1
-  loadBooks()
+  currentTab.value = tab;
+  currentPage.value = 1;
+  loadBooks();
 }
 
 async function loadBooks() {
@@ -126,82 +135,165 @@ async function loadBooks() {
       page: currentPage.value,
       limit: itemsPerPage.value,
       TrangThai: currentTab.value === 'deleted' ? 'Đã xóa' : undefined,
-    }
-    const res = await BookService.getFiltered(params)
-    books.value = res.data
-    totalBooks.value = res.total
+      genre: filter.genre || undefined,
+      nxb: filter.nxb || undefined,
+      year: filter.year || undefined,
+    };
+
+    const res = await BookService.getFiltered(params);
+    books.value = res.data;
+    totalBooks.value = res.total;
   } catch (e) {
-    console.error('Lỗi khi tải danh sách:', e)
+    console.error('Lỗi khi tải danh sách:', e);
   }
 }
 
-onMounted(loadBooks)
-watch([search, itemsPerPage], () => { currentPage.value = 1; loadBooks() })
-watch(currentPage, loadBooks)
+onMounted(() => {
+  loadBooks();
+  loadFilters();
+});
 
-const totalPages = computed(() => Math.ceil(totalBooks.value / itemsPerPage.value))
-function goToPage(page) { if (page >= 1 && page <= totalPages.value) currentPage.value = page }
-function getImageUrl(path) { return `http://localhost:3000/${path}` }
-function addBook() { selectedBook.value = null; modalMode.value = 'add'; showModal.value = true }
-function editBook(book) { selectedBook.value = { ...book }; modalMode.value = 'edit'; showModal.value = true }
+watch([search, itemsPerPage], () => { currentPage.value = 1; loadBooks(); });
+watch(currentPage, loadBooks);
+watch([() => filter.genre, () => filter.nxb, () => filter.year], () => {
+  currentPage.value = 1;
+  loadBooks();
+});
+
+const totalPages = computed(() => Math.ceil(totalBooks.value / itemsPerPage.value));
+
+function goToPage(page) {
+  if (page >= 1 && page <= totalPages.value) currentPage.value = page;
+}
+
+function getImageUrl(path) {
+  return `http://localhost:3000/${path}`;
+}
+
+function addBook() {
+  selectedBook.value = null;
+  modalMode.value = 'add';
+  showModal.value = true;
+}
+
+function editBook(book) {
+  selectedBook.value = { ...book };
+  modalMode.value = 'edit';
+  showModal.value = true;
+}
 
 async function handleSave(book) {
   try {
-    const formData = new FormData()
-    for (const key in book) formData.append(key, book[key])
+    const formData = new FormData();
+    for (const key in book) formData.append(key, book[key]);
 
     if (modalMode.value === 'add') {
-      await BookService.create(formData)
-      alert('Thêm sách thành công')
+      await BookService.create(formData);
+      alert('Thêm sách thành công');
     } else if (modalMode.value === 'edit' && book._id) {
-      await BookService.update(book._id, formData)
+      await BookService.update(book._id, formData);
     }
-    loadBooks()
+    loadBooks();
   } catch (e) {
-    console.error('Lỗi khi lưu:', e)
-    alert('Không thể lưu sách.')
+    console.error('Lỗi khi lưu:', e);
+    alert('Không thể lưu sách.');
   }
 }
 
 async function deleteBook(book) {
-  if (!confirm(`Xác nhận xóa "${book.TenSach}"?`)) return
+  if (!confirm(`Xác nhận xóa "${book.TenSach}"?`)) return;
   try {
-    await BookService.update(book._id, { TrangThai: 'Đã xóa' })
-    loadBooks()
+    await BookService.update(book._id, { TrangThai: 'Đã xóa' });
+    loadBooks();
   } catch (e) {
-    console.error('Lỗi khi xóa sách:', e)
-    alert('Xóa sách thất bại.')
+    console.error('Lỗi khi xóa sách:', e);
+    alert('Xóa sách thất bại.');
   }
 }
 
 async function restoreBook(book) {
-  if (!confirm(`Khôi phục sách "${book.TenSach}"?`)) return
+  if (!confirm(`Khôi phục sách "${book.TenSach}"?`)) return;
   try {
-    await BookService.update(book._id, { TrangThai: 'Hoạt động' })
-    loadBooks()
+    await BookService.update(book._id, { TrangThai: 'Hoạt động' });
+    loadBooks();
   } catch (e) {
-    console.error('Lỗi khi khôi phục sách:', e)
-    alert('Khôi phục thất bại.')
+    console.error('Lỗi khi khôi phục sách:', e);
+    alert('Khôi phục thất bại.');
+  }
+}
+
+async function loadFilters() {
+  try {
+    const { genres: genreList, nxbs: nxbList } = await BookService.getFilters();
+    genres.value = genreList;
+    nxbs.value = nxbList;
+  } catch (e) {
+    console.error("Không thể tải danh sách bộ lọc:", e);
   }
 }
 </script>
 
 <style scoped>
-.table td, .table th {
+.table td,
+.table th {
   vertical-align: middle;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-th:nth-child(1), td:nth-child(1) { width: 80px; }
-th:nth-child(2), td:nth-child(2),
-th:nth-child(3), td:nth-child(3),
-th:nth-child(7), td:nth-child(7) { max-width: 200px; }
-th:nth-child(4), td:nth-child(4) { width: 100px; }
-th:nth-child(5), td:nth-child(5) { width: 90px; }
-th:nth-child(6), td:nth-child(6) { width: 90px; }
-th:nth-child(8), td:nth-child(8) { width: 60px; text-align: center; }
-th:nth-child(9), td:nth-child(9) { width: 130px; }
-.truncate { max-width: 200px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.book-cover { width: 50px; height: 70px; object-fit: contain; display: block; margin: 0 auto; }
+
+th:nth-child(1),
+td:nth-child(1) {
+  width: 80px;
+}
+
+th:nth-child(2),
+td:nth-child(2),
+th:nth-child(3),
+td:nth-child(3),
+th:nth-child(7),
+td:nth-child(7) {
+  max-width: 200px;
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+  width: 100px;
+}
+
+th:nth-child(5),
+td:nth-child(5) {
+  width: 90px;
+}
+
+th:nth-child(6),
+td:nth-child(6) {
+  width: 90px;
+}
+
+th:nth-child(8),
+td:nth-child(8) {
+  width: 60px;
+  text-align: center;
+}
+
+th:nth-child(9),
+td:nth-child(9) {
+  width: 130px;
+}
+
+.truncate {
+  max-width: 200px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.book-cover {
+  width: 50px;
+  height: 70px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
 </style>
