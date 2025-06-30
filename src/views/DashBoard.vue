@@ -9,7 +9,7 @@
           <font-awesome-icon :icon="['fas', 'book']" /> Quản lý Sách
         </li>
         <li @click="currentView = 'readers'" :class="{ active: currentView === 'readers' }">
-          <font-awesome-icon :icon="['fas', 'book-open-reader']" /> Độc giả
+          <font-awesome-icon :icon="['fas', 'book-open-reader']" /> Quản lý Độc giả
         </li>
         <li @click="currentView = 'borrowings'" :class="{ active: currentView === 'borrowings' }">
           <font-awesome-icon :icon="['fas', 'arrows-rotate']" /> Quản lý mượn sách
@@ -17,8 +17,11 @@
         <li @click="currentView = 'publishers'" :class="{ active: currentView === 'publishers' }">
           <font-awesome-icon :icon="['fas', 'building']" /> Quản lý NXB
         </li>
-        <li @click="currentView = 'notify'" :class="{ active: currentView === 'notify' }">
+        <li @click="currentView = 'notifys'" :class="{ active: currentView === 'notifys' }">
           <font-awesome-icon :icon="['fas', 'calendar']" /> Quản lý Thông báo
+        </li>
+        <li @click="currentView = 'staffs'" :class="{ active: currentView === 'staffs' }">
+          <font-awesome-icon :icon="['fas', 'user-tie']" /> Quản lý nhân viên
         </li>
         <li @click="currentView = 'statistics'" :class="{ active: currentView === 'statistics' }">
           <font-awesome-icon :icon="['fas', 'chart-simple']" /> Thống kê
@@ -57,7 +60,7 @@ import Statistics from '@/components/Statistics.vue'
 import AuthService from '@/services/auth.service.js'
 import StaffService from '@/services/staff.service.js'
 import NotifyManager from '@/components/NotifyManager.vue';
-
+import StaffManager from '@/components/StaffManager.vue';
 
 const staff = ref(null)
 const router = useRouter()
@@ -71,7 +74,8 @@ const currentViewComponent = computed(() => {
     borrowings: BorrowManager,
     publishers: PublisherManager,
     statistics: Statistics,
-    notify: NotifyManager,
+    notifys: NotifyManager,
+    staffs: StaffManager
   }[currentView.value];
 });
 

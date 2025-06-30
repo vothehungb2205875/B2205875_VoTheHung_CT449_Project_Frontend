@@ -103,6 +103,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue';
 import BookService from '@/services/book.service';
 import BookFormModal from '@/components/BookFormModal.vue';
 import BookFilters from '@/components/BookFilters.vue';
+import { toast } from 'vue3-toastify'
 
 const books = ref([]);
 const totalBooks = ref(0);
@@ -145,6 +146,7 @@ async function loadBooks() {
     totalBooks.value = res.total;
   } catch (e) {
     console.error('Lỗi khi tải danh sách:', e);
+    toast.error('Không thể tải danh sách sách.');
   }
 }
 
@@ -189,14 +191,16 @@ async function handleSave(book) {
 
     if (modalMode.value === 'add') {
       await BookService.create(formData);
-      alert('Thêm sách thành công');
+      toast.success('Thêm sách thành công');
     } else if (modalMode.value === 'edit' && book._id) {
       await BookService.update(book._id, formData);
+      toast.success('Cập nhật sách thành công');
     }
+
     loadBooks();
   } catch (e) {
     console.error('Lỗi khi lưu:', e);
-    alert('Không thể lưu sách.');
+    toast.error(e.response?.data?.message || 'Không thể lưu sách.');
   }
 }
 
@@ -204,10 +208,11 @@ async function deleteBook(book) {
   if (!confirm(`Xác nhận xóa "${book.TenSach}"?`)) return;
   try {
     await BookService.update(book._id, { TrangThai: 'Đã xóa' });
+    toast.success('Đã xóa sách thành công');
     loadBooks();
   } catch (e) {
     console.error('Lỗi khi xóa sách:', e);
-    alert('Xóa sách thất bại.');
+    toast.error(e.response?.data?.message || 'Xóa sách thất bại.');
   }
 }
 
@@ -215,10 +220,11 @@ async function restoreBook(book) {
   if (!confirm(`Khôi phục sách "${book.TenSach}"?`)) return;
   try {
     await BookService.update(book._id, { TrangThai: 'Hoạt động' });
+    toast.success('Khôi phục sách thành công');
     loadBooks();
   } catch (e) {
     console.error('Lỗi khi khôi phục sách:', e);
-    alert('Khôi phục thất bại.');
+    toast.error(e.response?.data?.message || 'Khôi phục thất bại.');
   }
 }
 
@@ -229,9 +235,11 @@ async function loadFilters() {
     nxbs.value = nxbList;
   } catch (e) {
     console.error("Không thể tải danh sách bộ lọc:", e);
+    toast.error('Không thể tải bộ lọc sách');
   }
 }
 </script>
+
 
 <style scoped>
 .table td,

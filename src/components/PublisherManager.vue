@@ -1,6 +1,6 @@
 <template>
     <div class="container py-4">
-      <h4>Quản lý Nhà Xuất Bản</h4>
+      <h4>Quản lý Nhà xuất bản</h4>
   
       <!-- Tìm kiếm -->
       <input
@@ -82,6 +82,7 @@
   import { ref, computed, onMounted, watch } from 'vue'
   import PublisherService from '@/services/publisher.service'
   import PublisherFormModal from '@/components/PublisherFormModal.vue'
+  import { toast } from 'vue3-toastify'
   
   const publishers = ref([])
   const totalPublishers = ref(0)
@@ -144,24 +145,30 @@
     try {
       if (modalMode.value === 'add') {
         await PublisherService.create(publisher)
+        toast.success('Thêm nhà xuất bản thành công')
       } else if (modalMode.value === 'edit' && publisher._id) {
         await PublisherService.update(publisher._id, publisher)
+        toast.success('Cập nhật nhà xuất bản thành công')
       }
       loadPublishers()
     } catch (e) {
       console.error('Lỗi khi lưu NXB:', e)
+      toast.error('Lỗi khi lưu nhà xuất bản')
     }
   }
-  
+
   async function deletePublisher(publisher) {
     if (!confirm(`Xác nhận xóa "${publisher.TenNXB}"?`)) return
     try {
       await PublisherService.delete(publisher._id)
+      toast.success('Xóa nhà xuất bản thành công')
       loadPublishers()
     } catch (e) {
       console.error('Lỗi khi xóa NXB:', e)
+      toast.error('Lỗi khi xóa nhà xuất bản')
     }
   }
+
   </script>
   
   <style scoped>

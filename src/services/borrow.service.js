@@ -39,6 +39,11 @@ class BorrowService {
     return await this.api.put(`/${id}`, payload);
   }
 
+  async markAsOverdue(id) {
+    const payload = { TrangThai: "Quá hạn" };
+    return await this.api.put(`/${id}`, payload);
+  }
+
   async statistic() {
     return (await this.api.get("/statistic")).data;
   }

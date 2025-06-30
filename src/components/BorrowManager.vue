@@ -11,7 +11,7 @@
     />
 
     <!-- Bộ lọc nâng cao -->
-    <div class="row mb-3">
+    <div class="row mb-3 d-flex flex-row justify-content-center">
       <div class="col-md-3">
         <input type="date" v-model="filterStart" class="form-control" />
       </div>
@@ -28,8 +28,11 @@
           <option>Quá hạn</option>
         </select>
       </div>
-      <div class="col-md-3">
+      <div class="col-md-1">
         <button class="btn btn-primary w-100" @click="loadBorrows">Lọc</button>
+      </div>
+      <div class="col-md-1">
+        <button class="btn btn-secondary w-100" @click="resetFilters">Reset</button>
       </div>
     </div>
 
@@ -99,9 +102,9 @@
               <button
                 class="btn btn-sm btn-outline-warning"
                 @click="remindReturn(item)"
-                v-if="item.TrangThai === 'Đang mượn' && isOverdue(item)"
+                v-if="item.TrangThai === 'Quá hạn'"
                 :disabled="loadingMap[item._id]"
-                :class="{ blinking: isOverdue(item) }"
+                :class="{ blinking: item.TrangThai === 'Quá hạn' }"
               >
                 <span v-if="loadingMap[item._id]" class="spinner-border spinner-border-sm me-1"></span>
                 Nhắc trả
@@ -139,6 +142,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import BorrowService from '@/services/borrow.service'
 import MailService from '@/services/mail.service'
 import ReaderService from '@/services/reader.service'
+import { toast } from 'vue3-toastify'
 
 const borrows = ref([])
 const totalBorrows = ref(0)
@@ -183,8 +187,11 @@ async function loadBorrows() {
 
     for (const item of borrowList) {
       try {
-        const reader = await ReaderService.getReaderByMa(item.MaDocGia) // Cải tiến trong tương lai, dùng lookup
+        const reader = await ReaderService.getReaderByMa(item.MaDocGia)
         item.reader = reader
+        if (item.TrangThai === 'Đang mượn' && isOverdue(item)) {
+          await markAsOverdue(item)
+        }
       } catch {
         item.reader = null
       }
@@ -193,7 +200,8 @@ async function loadBorrows() {
     borrows.value = borrowList
     totalBorrows.value = res.total
   } catch (err) {
-    console.error('Không thể tải danh sách mượn:', err)
+    toast.error('Không thể tải danh sách mượn!')
+    console.error(err)
   }
 }
 
@@ -219,8 +227,15 @@ function statusClass(status) {
 }
 
 function isOverdue(item) {
-  if (item.TrangThai !== 'Đang mượn' || !item.NgayTra) return false
-  return new Date(item.NgayTra) < new Date()
+  if (item.TrangThai !== 'Đang mượn' || !item.NgayTra) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const dueDate = new Date(item.NgayTra);
+  dueDate.setHours(0, 0, 0, 0);
+
+  return dueDate < today;
 }
 
 function formatDate(dateStr) {
@@ -234,8 +249,18 @@ async function markReturned(item) {
     await BorrowService.markAsReturned(item._id)
     item.TrangThai = 'Đã trả'
     item.NgayTraTT = new Date()
+    toast.success('Cập nhật trạng thái: Đã trả')
   } catch {
-    alert('Không thể cập nhật trạng thái')
+    toast.error('Không thể cập nhật trạng thái')
+  }
+}
+
+async function markAsOverdue(item) {
+  try {
+    await BorrowService.markAsOverdue(item._id)
+    item.TrangThai = 'Quá hạn'
+  } catch (err) {
+    console.error(`Không thể cập nhật quá hạn cho ${item._id}`, err)
   }
 }
 
@@ -244,8 +269,9 @@ async function cancelBorrow(item) {
     try {
       await BorrowService.cancelBorrow(item._id)
       item.TrangThai = 'Đã hủy'
+      toast.success('Đã hủy mượn thành công')
     } catch {
-      alert('Không thể hủy mượn')
+      toast.error('Không thể hủy mượn')
     }
   }
 }
@@ -254,8 +280,9 @@ async function markAsBorrowed(item) {
   try {
     await BorrowService.markAsBorrowed(item._id)
     item.TrangThai = 'Đang mượn'
+    toast.success('Đã chuyển trạng thái sang "Đang mượn"')
   } catch {
-    alert('Không thể cập nhật trạng thái sang "Đang mượn"')
+    toast.error('Không thể cập nhật trạng thái')
   }
 }
 
@@ -263,24 +290,39 @@ async function remindReturn(item) {
   loadingMap.value[item._id] = true
   try {
     const reader = await ReaderService.getReaderByMa(item.MaDocGia)
-    if (!reader || !reader.email) return alert('Không tìm thấy email độc giả!')
+    if (!reader || !reader.email) {
+      toast.error('Không tìm thấy email độc giả!')
+      return
+    }
+
     await MailService.sendReminder({
       to: reader.email,
       readerName: reader.Ten || 'Độc giả',
       bookCode: item.MaSach,
       dueDate: formatDate(item.NgayTra),
     })
+
     await BorrowService.markAsReminded(item._id)
     item.TrangThai = 'Quá hạn'
-    alert(`Đã gửi email nhắc trả đến: ${reader.email}`)
+    toast.success(`Đã gửi nhắc trả đến: ${reader.email}`)
   } catch (err) {
     console.error(err)
-    alert('Gửi email thất bại!')
+    toast.error('Gửi email thất bại!')
   } finally {
     loadingMap.value[item._id] = false
   }
 }
+
+function resetFilters() {
+  filterStart.value = ''
+  filterEnd.value = ''
+  filterStatus.value = ''
+  search.value = ''
+  currentPage.value = 1
+  loadBorrows()
+}
 </script>
+
 
 <style scoped>
 .badge {

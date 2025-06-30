@@ -90,6 +90,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import ReaderService from '@/services/reader.service'
 import ReaderFormModal from '@/components/ReaderFormModal.vue'
+import { toast } from 'vue3-toastify'
 
 const readers = ref([])
 const totalReaders = ref(0)
@@ -125,28 +126,54 @@ async function loadReaders() {
   }
 }
 
-onMounted(loadReaders)
-watch([search, itemsPerPage], () => { currentPage.value = 1; loadReaders() })
-watch(currentPage, loadReaders)
+onMounted(loadReaders);
 
-const totalPages = computed(() => Math.ceil(totalReaders.value / itemsPerPage.value))
-function goToPage(page) { if (page >= 1 && page <= totalPages.value) currentPage.value = page }
-function getImageUrl(path) { return path.startsWith('http') ? path : `http://localhost:3000/${path}` }
-function addReader() { selectedReader.value = null; modalMode.value = 'add'; showModal.value = true }
-function editReader(reader) { selectedReader.value = { ...reader }; modalMode.value = 'edit'; showModal.value = true }
+watch([search, itemsPerPage], () => {
+  currentPage.value = 1;
+  loadReaders();
+});
+
+watch(currentPage, loadReaders);
+
+const totalPages = computed(() => {
+  return Math.ceil(totalReaders.value / itemsPerPage.value);
+});
+
+function goToPage(page) {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
+}
+
+function getImageUrl(path) {
+  return path.startsWith('http') ? path : `http://localhost:3000/${path}`;
+}
+
+function addReader() {
+  selectedReader.value = null;
+  modalMode.value = 'add';
+  showModal.value = true;
+}
+
+function editReader(reader) {
+  selectedReader.value = { ...reader };
+  modalMode.value = 'edit';
+  showModal.value = true;
+}
 
 async function handleSave(readerFormData) {
   try {
     if (modalMode.value === 'add') {
       await ReaderService.create(readerFormData)
-      alert("Thêm độc giả thành công")
+      toast.success("Thêm độc giả thành công")
     } else if (modalMode.value === 'edit' && selectedReader.value?._id) {
       await ReaderService.update(selectedReader.value._id, readerFormData)
+      toast.success("Cập nhật độc giả thành công")
     }
     loadReaders()
   } catch (e) {
     console.error('Lỗi khi lưu độc giả:', e)
-    alert('Không thể lưu độc giả.')
+    toast.error('Không thể lưu độc giả.')
   }
 }
 
@@ -155,10 +182,11 @@ async function deleteReader(reader) {
 
   try {
     await ReaderService.update(reader._id, { TrangThai: 'Vô hiệu hóa' })
+    toast.success(`Đã vô hiệu hóa độc giả "${reader.Ten}"`)
     loadReaders()
   } catch (error) {
     console.error('Lỗi khi vô hiệu hóa độc giả:', error)
-    alert('Vô hiệu hóa độc giả thất bại.')
+    toast.error('Vô hiệu hóa độc giả thất bại.')
   }
 }
 
@@ -167,10 +195,11 @@ async function restoreReader(reader) {
 
   try {
     await ReaderService.update(reader._id, { TrangThai: 'Hoạt động' })
+    toast.success(`Đã khôi phục độc giả "${reader.Ten}"`)
     loadReaders()
   } catch (error) {
     console.error('Lỗi khi khôi phục độc giả:', error)
-    alert('Khôi phục độc giả thất bại.')
+    toast.error('Khôi phục độc giả thất bại.')
   }
 }
 </script>

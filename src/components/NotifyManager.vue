@@ -57,6 +57,7 @@
   import { ref, onMounted } from "vue";
   import NotifyService from "@/services/notify.service";
   import dayjs from "dayjs";
+  import { toast } from 'vue3-toastify'
   
   const notifys = ref([]);
   const form = ref({
@@ -70,14 +71,34 @@
   };
   
   const handleSubmit = async () => {
-    if (editingId.value) {
-      await NotifyService.update(editingId.value, form.value);
-    } else {
-      await NotifyService.create(form.value);
+    try {
+      if (editingId.value) {
+        await NotifyService.update(editingId.value, form.value);
+        toast.success("Cập nhật thông báo thành công!");
+      } else {
+        await NotifyService.create(form.value);
+        toast.success("Thêm thông báo mới thành công!");
+      }
+      await fetchData();
+      resetForm();
+    } catch (err) {
+      console.error(err);
+      toast.error("Thao tác không thành công!");
     }
-    await fetchData();
-    resetForm();
   };
+
+const deleteNotify = async (id) => {
+  if (confirm("Bạn chắc chắn muốn xóa?")) {
+    try {
+      await NotifyService.delete(id);
+      toast.success("Xóa thông báo thành công!");
+      await fetchData();
+    } catch {
+      toast.error("Xóa thất bại.");
+    }
+  }
+};
+
   
   const editNotify = (notify) => {
     editingId.value = notify._id;
@@ -85,13 +106,6 @@
       NoiDung: notify.NoiDung,
       Loai: notify.Loai,
     };
-  };
-  
-  const deleteNotify = async (id) => {
-    if (confirm("Bạn chắc chắn muốn xóa?")) {
-      await NotifyService.delete(id);
-      await fetchData();
-    }
   };
   
   const resetForm = () => {
