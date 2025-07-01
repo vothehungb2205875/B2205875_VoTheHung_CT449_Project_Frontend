@@ -24,7 +24,7 @@
                     <div class="card-body p-2">
                       <h6 class="book-title text-truncate fw-semibold mb-1">{{ book.TenSach }}</h6>
                       <div class="book-author text-muted small">Tác giả: {{ book.TacGia }}</div>
-                      <div class="book-stock small" :class="{
+                      <div class="book-stock fs-6" :class="{
                         'text-success': book.SoQuyen > 0,
                         'text-danger': book.SoQuyen === 0
                       }">

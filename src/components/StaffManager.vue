@@ -152,7 +152,7 @@
       }
       loadStaffs()
     } catch (err) {
-      toast.error('Không thể lưu nhân viên')
+      toast.error(err?.response?.data?.message);
     }
   }
   

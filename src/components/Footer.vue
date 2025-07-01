@@ -38,7 +38,7 @@
             <div class="fb-page"
               data-href="https://www.facebook.com/CTUDHCT" 
               data-tabs="" 
-              data-width="" 
+              data-width="250" 
               data-height="140" 
               data-small-header="false" 
               data-adapt-container-width="true" 

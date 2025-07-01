@@ -172,8 +172,7 @@ async function handleSave(readerFormData) {
     }
     loadReaders()
   } catch (e) {
-    console.error('Lỗi khi lưu độc giả:', e)
-    toast.error('Không thể lưu độc giả.')
+    toast.error(e?.response?.data?.message);
   }
 }
 

@@ -39,13 +39,13 @@
             <td>{{ index + 1 }}</td>
             <td>{{ notify.NoiDung }}</td>
             <td>
-              <span class="badge bg-info text-dark" v-if="notify.Loai === 'thongbao'">Thông báo</span>
+              <span class="badge bg-info" v-if="notify.Loai === 'thongbao'">Thông báo</span>
               <span class="badge bg-success" v-else>Sự kiện</span>
             </td>
             <td>{{ formatDate(notify.NgayTao) }}</td>
             <td class="text-center">
-              <button class="btn btn-sm btn-warning me-2" @click="editNotify(notify)">Sửa</button>
-              <button class="btn btn-sm btn-danger" @click="deleteNotify(notify._id)">Xóa</button>
+              <button class="btn btn-sm btn-outline-primary me-2" @click="editNotify(notify)">Sửa</button>
+              <button class="btn btn-sm btn-outline-danger" @click="deleteNotify(notify._id)">Xóa</button>
             </td>
           </tr>
         </tbody>

@@ -4,7 +4,7 @@
       <!-- Banner -->
       <section class="text-center mb-5">
         <img src="/images/banner.png" style="max-width: 200px;" />
-        <h2 class="fw-bold mt-3">Chào mừng bạn đến với Thư viện!</h2>
+        <h2 class="fw-bold mt-3">Chào mừng bạn đến với CTLIB!</h2>
         <p class="text-muted">Hàng ngàn đầu sách chờ bạn khám phá...</p>
       </section>
 
@@ -34,7 +34,7 @@
                     <div class="text-start">
                       <h6 class="mb-1 fw-semibold">{{ index + 1 }}. {{ book.TenSach }}</h6>
                       <div class="text-muted small">Tác giả: {{ book.TacGia }}</div>
-                      <div class="small" :class="{
+                      <div class="" :class="{
                         'text-success': book.SoQuyen > 0,
                         'text-danger': book.SoQuyen === 0
                       }">
@@ -178,7 +178,7 @@ onMounted(async () => {
 
     stats.value[0].value = readerStat.totalReaders
     stats.value[1].value = readerStat.newReadersThisMonth
-    stats.value[2].value = borrowStat.count
+    stats.value[2].value = borrowStat.soLuotMuon
 
     await nextTick()
     observeSection()

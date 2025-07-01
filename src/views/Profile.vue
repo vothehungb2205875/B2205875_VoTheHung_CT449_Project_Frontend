@@ -302,6 +302,7 @@ async function cancelBorrow(item) {
   try {
     await BorrowService.cancelBorrow(item._id);
     item.TrangThai = 'Đã hủy';
+    toast.success('Huỷ mượn sách thành công.');
   } catch (err) {
     console.error('Lỗi hủy lượt mượn:', err);
     toast.error('Không thể hủy lượt mượn.');

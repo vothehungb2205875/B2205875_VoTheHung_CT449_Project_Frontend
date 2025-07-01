@@ -219,10 +219,15 @@ function submit() {
 
   const data = new FormData()
   for (const key in formData.value) {
-    if (isEditMode.value && key === 'MatKhau') continue
+    if (
+      isEditMode.value &&
+      (key === 'MatKhau' || key === 'createdAt')
+    ) continue
+
     data.append(key, formData.value[key])
   }
-  if (avatarFile.value) {
+
+  if (avatarFile?.value) {
     data.append('avatar', avatarFile.value)
   }
 

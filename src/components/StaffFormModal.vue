@@ -151,10 +151,22 @@
   }
   
   function submit() {
-    if (!validateForm()) return
-    emit('save', formData.value)
-    setTimeout(closeDialog, 50)
+    if (!validateForm()) return;
+
+    const safeData = {};
+    for (const key in formData.value) {
+      if (
+        isEditMode.value &&
+        (key === 'createdAt' || key === 'Password')
+      ) continue;
+
+      safeData[key] = formData.value[key];
+    }
+
+    emit('save', safeData);
+    setTimeout(closeDialog, 50);
   }
+
   
   onMounted(async () => {
     const bootstrap = await import('bootstrap')
