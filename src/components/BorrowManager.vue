@@ -25,7 +25,8 @@
           <option>Đang mượn</option>
           <option>Đã trả</option>
           <option>Đã hủy</option>
-          <option>Quá hạn</option>
+          <option>Quá hạn trả</option>
+          <option>Quá hạn nhận</option>
         </select>
       </div>
       <div class="col-md-1">
@@ -33,6 +34,11 @@
       </div>
       <div class="col-md-1">
         <button class="btn btn-secondary w-100" @click="resetFilters">Reset</button>
+      </div>
+      <div class="col-md-1">
+        <button class="btn btn-warning w-100" @click="remindAllOverdue">
+          Email
+        </button>
       </div>
     </div>
 
@@ -88,23 +94,23 @@
               <button
                 class="btn btn-sm btn-outline-success me-2"
                 @click="markReturned(item)"
-                v-if="item.TrangThai === 'Đang mượn' || item.TrangThai === 'Quá hạn'"
+                v-if="item.TrangThai === 'Đang mượn' || item.TrangThai === 'Quá hạn trả'"
               >
                 Đã trả
               </button>
               <button
                 class="btn btn-sm btn-outline-danger me-2"
                 @click="cancelBorrow(item)"
-                v-if="item.TrangThai === 'Đăng ký mượn'"
+                v-if="item.TrangThai === 'Đăng ký mượn' || item.TrangThai === 'Quá hạn trả nhận'"
               >
                 Hủy
               </button>
               <button
                 class="btn btn-sm btn-outline-warning"
                 @click="remindReturn(item)"
-                v-if="item.TrangThai === 'Quá hạn'"
+                v-if="item.TrangThai === 'Quá hạn trả'"
                 :disabled="loadingMap[item._id]"
-                :class="{ blinking: item.TrangThai === 'Quá hạn' }"
+                :class="{ blinking: item.TrangThai === 'Quá hạn trả' }"
               >
                 <span v-if="loadingMap[item._id]" class="spinner-border spinner-border-sm me-1"></span>
                 Nhắc trả
@@ -135,6 +141,21 @@
       </ul>
     </nav>
   </div>
+  <!-- Overlay + Progress bar theo % -->
+  <div v-if="isSendingBulk" class="overlay-progress">
+    <div class="progress w-75">
+      <div
+        class="progress-bar progress-bar-striped progress-bar-animated bg-info"
+        role="progressbar"
+        :style="{ width: sendProgress + '%' }"
+      >
+        {{ sendProgress }}%
+      </div>
+    </div>
+    <div class="mt-2 text-white">
+      Đang gửi email nhắc {{ sendProgress }}% ({{ sentCount }}/{{ totalToSend }})
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -151,6 +172,9 @@ const search = ref('')
 const currentPage = ref(1)
 const itemsPerPage = ref(5)
 const loadingMap = ref({})
+const isSendingBulk = ref(false)
+const sendProgress = ref(0) // phần trăm
+const totalToSend = ref(0)
 
 // Bộ lọc
 const filterStart = ref('')
@@ -161,7 +185,7 @@ let intervalId = null
 
 onMounted(() => {
   loadBorrows()
-  intervalId = setInterval(loadBorrows, 60000)
+  intervalId = setInterval(loadBorrows, 60000) // Tự động reload mỗi phút
 })
 onBeforeUnmount(() => clearInterval(intervalId))
 
@@ -185,13 +209,11 @@ async function loadBorrows() {
     const res = await BorrowService.getFiltered(params)
     const borrowList = res.data
 
+    // Gắn thông tin độc giả cho từng bản ghi
     for (const item of borrowList) {
       try {
         const reader = await ReaderService.getReaderByMa(item.MaDocGia)
         item.reader = reader
-        if (item.TrangThai === 'Đang mượn' && isOverdue(item)) {
-          await markAsOverdue(item)
-        }
       } catch {
         item.reader = null
       }
@@ -222,20 +244,8 @@ function statusClass(status) {
     'badge bg-success': status === 'Đã trả',
     'badge bg-danger': status === 'Đã hủy',
     'badge bg-primary': status === 'Đang mượn',
-    'badge bg-warning text-dark': status === 'Quá hạn',
+    'badge bg-warning text-dark': status === 'Quá hạn trả' || status === 'Quá hạn nhận',
   }
-}
-
-function isOverdue(item) {
-  if (item.TrangThai !== 'Đang mượn' || !item.NgayTra) return false;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const dueDate = new Date(item.NgayTra);
-  dueDate.setHours(0, 0, 0, 0);
-
-  return dueDate < today;
 }
 
 function formatDate(dateStr) {
@@ -252,15 +262,6 @@ async function markReturned(item) {
     toast.success('Cập nhật trạng thái: Đã trả')
   } catch {
     toast.error('Không thể cập nhật trạng thái')
-  }
-}
-
-async function markAsOverdue(item) {
-  try {
-    await BorrowService.markAsOverdue(item._id)
-    item.TrangThai = 'Quá hạn'
-  } catch (err) {
-    console.error(`Không thể cập nhật quá hạn cho ${item._id}`, err)
   }
 }
 
@@ -302,8 +303,6 @@ async function remindReturn(item) {
       dueDate: formatDate(item.NgayTra),
     })
 
-    await BorrowService.markAsReminded(item._id)
-    item.TrangThai = 'Quá hạn'
     toast.success(`Đã gửi nhắc trả đến: ${reader.email}`)
   } catch (err) {
     console.error(err)
@@ -311,6 +310,57 @@ async function remindReturn(item) {
   } finally {
     loadingMap.value[item._id] = false
   }
+}
+
+async function remindAllOverdue() {
+  const overdueItems = borrows.value.filter(
+    (item) => item.TrangThai === 'Quá hạn trả'
+  )
+
+  if (overdueItems.length === 0) {
+    toast.info('Không có bản ghi nào quá hạn trả')
+    return
+  }
+
+  if (!confirm(`Bạn có chắc muốn gửi nhắc trả cho ${overdueItems.length} lượt mượn?`)) {
+    return
+  }
+
+  isSendingBulk.value = true
+  sendProgress.value = 0
+  totalToSend.value = overdueItems.length
+  let sentCount = 0
+  let failCount = 0
+
+  for (const item of overdueItems) {
+    try {
+      const reader = await ReaderService.getReaderByMa(item.MaDocGia)
+      if (!reader?.email) {
+        failCount++
+        continue
+      }
+
+      await MailService.sendReminder({
+        to: reader.email,
+        readerName: reader.Ten || 'Độc giả',
+        bookCode: item.MaSach,
+        dueDate: formatDate(item.NgayTra),
+      })
+
+      sentCount++
+    } catch (err) {
+      failCount++
+      console.error(`Lỗi gửi cho ${item.MaDocGia}:`, err)
+    }
+
+    sendProgress.value = Math.round((sentCount + failCount) * 100 / totalToSend.value)
+  }
+
+  setTimeout(() => {
+  isSendingBulk.value = false
+  sendProgress.value = 0
+  }, 2000)
+  toast.success(`Đã gửi nhắc thành công cho ${sentCount} lượt. Thất bại: ${failCount}.`)
 }
 
 function resetFilters() {
@@ -324,6 +374,7 @@ function resetFilters() {
 </script>
 
 
+
 <style scoped>
 .badge {
   font-size: 0.8rem;
@@ -333,6 +384,19 @@ function resetFilters() {
   animation: blink 1s infinite;
   border-color: rgb(255, 162, 0);
   color: rgb(0, 0, 0);
+}
+.overlay-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  background-color: rgba(0, 0, 0, 0.6);
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 @keyframes blink {
   0%, 100% { opacity: 1; }
