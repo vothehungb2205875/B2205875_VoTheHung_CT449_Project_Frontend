@@ -157,7 +157,7 @@ const handleBorrow = async () => {
     }
 
     const borrowHistory = await BorrowService.history(user.value.MaDocGia);
-    const activeBorrows = borrowHistory.filter(b => b.TrangThai === 'Đang mượn');
+    const activeBorrows = borrowHistory.filter(b => b.TrangThai === 'Đang mượn' || b.TrangThai === 'Đăng ký mượn');
 
     if (activeBorrows.length >= 3) {
       toast.info("Bạn đã có 3 sách đang mượn. Vui lòng trả sách trước khi tiếp tục.");
@@ -180,11 +180,7 @@ const handleBorrow = async () => {
 
   } catch (err) {
     const message = err.response?.data?.message || "Lỗi khi mượn sách";
-    toast.error(`${message}`);
-
-    if (message.includes("Vui lòng cập nhật thông tin độc giả")) {
-      router.push("/profile");
-    }
+    toast.info(`${message}`);
   }
 };
 
