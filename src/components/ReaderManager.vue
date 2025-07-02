@@ -55,7 +55,9 @@
               <img v-if="reader.avatar" :src="getImageUrl(reader.avatar)" class="avatar-img rounded-circle" alt="Avatar" />
             </td>
             <td class="text-center">
-              <button class="btn btn-sm" :class="currentTab === 'inactive' ? 'btn-outline-success' : 'btn-outline-primary me-2'" 
+              <button class="btn btn-sm btn-outline-dark me-2" @click="viewBorrowHistory(reader)">Lịch sử</button>
+              <button class="btn btn-sm"
+                      :class="currentTab === 'inactive' ? 'btn-outline-success' : 'btn-outline-primary me-2'" 
                       @click="currentTab === 'inactive' ? restoreReader(reader) : editReader(reader)">
                 {{ currentTab === 'inactive' ? 'Khôi phục' : 'Sửa' }}
               </button>
@@ -81,16 +83,45 @@
       </ul>
     </nav>
 
-    <!-- Modal -->
+    <!-- Modal thêm/sửa độc giả -->
     <ReaderFormModal v-model="showModal" :reader="selectedReader" :mode="modalMode" @save="handleSave" />
+
+    <!-- Modal lịch sử mượn sách (Bootstrap) -->
+    <div class="modal fade" tabindex="-1" ref="historyModalRef" data-bs-backdrop="static">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Lịch sử mượn sách</h5>
+            <button type="button" class="btn-close" @click="closeHistoryModal"></button>
+          </div>
+          <div class="modal-body">
+            <div v-if="borrowHistory.length">
+              <ul class="list-group">
+                <li v-for="item in borrowHistory" :key="item._id" class="list-group-item">
+                  <strong>{{ item.bookTitle || 'Không rõ tên sách' }}</strong><br />
+                  Mượn: {{ formatDate(item.NgayMuon) }} - Trả: {{ formatDate(item.NgayTra) }}<br />
+                  <span :class="statusClass(item)">{{ item.TrangThai }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-else class="text-muted">Không có dữ liệu mượn sách.</div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click="closeHistoryModal">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import ReaderService from '@/services/reader.service'
-import ReaderFormModal from '@/components/ReaderFormModal.vue'
 import { toast } from 'vue3-toastify'
+import ReaderService from '@/services/reader.service'
+import BorrowService from '@/services/borrow.service'
+import ReaderFormModal from '@/components/ReaderFormModal.vue'
 
 const readers = ref([])
 const totalReaders = ref(0)
@@ -102,6 +133,27 @@ const currentTab = ref('active')
 
 const currentPage = ref(1)
 const itemsPerPage = ref(5)
+
+const borrowHistory = ref([])
+const historyModalRef = ref(null)
+let historyModalInstance = null
+
+onMounted(loadReaders)
+
+onMounted(() => {
+  historyModalRef.value?.addEventListener('hidden.bs.modal', () => {
+    borrowHistory.value = []
+  })
+})
+
+watch([search, itemsPerPage], () => {
+  currentPage.value = 1
+  loadReaders()
+})
+
+watch(currentPage, loadReaders)
+
+const totalPages = computed(() => Math.ceil(totalReaders.value / itemsPerPage.value))
 
 function switchTab(tab) {
   currentTab.value = tab
@@ -126,39 +178,24 @@ async function loadReaders() {
   }
 }
 
-onMounted(loadReaders);
-
-watch([search, itemsPerPage], () => {
-  currentPage.value = 1;
-  loadReaders();
-});
-
-watch(currentPage, loadReaders);
-
-const totalPages = computed(() => {
-  return Math.ceil(totalReaders.value / itemsPerPage.value);
-});
-
-function goToPage(page) {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page;
-  }
+function getImageUrl(path) {
+  return path.startsWith('http') ? path : `http://localhost:3000/${path}`
 }
 
-function getImageUrl(path) {
-  return path.startsWith('http') ? path : `http://localhost:3000/${path}`;
+function goToPage(page) {
+  if (page >= 1 && page <= totalPages.value) currentPage.value = page
 }
 
 function addReader() {
-  selectedReader.value = null;
-  modalMode.value = 'add';
-  showModal.value = true;
+  selectedReader.value = null
+  modalMode.value = 'add'
+  showModal.value = true
 }
 
 function editReader(reader) {
-  selectedReader.value = { ...reader };
-  modalMode.value = 'edit';
-  showModal.value = true;
+  selectedReader.value = { ...reader }
+  modalMode.value = 'edit'
+  showModal.value = true
 }
 
 async function handleSave(readerFormData) {
@@ -172,34 +209,63 @@ async function handleSave(readerFormData) {
     }
     loadReaders()
   } catch (e) {
-    toast.error(e?.response?.data?.message);
+    toast.error(e?.response?.data?.message || "Lỗi không xác định")
   }
 }
 
 async function deleteReader(reader) {
   if (!confirm(`Xác nhận vô hiệu hóa độc giả "${reader.Ten}"?`)) return
-
   try {
     await ReaderService.update(reader._id, { TrangThai: 'Vô hiệu hóa' })
     toast.success(`Đã vô hiệu hóa độc giả "${reader.Ten}"`)
     loadReaders()
-  } catch (error) {
-    console.error('Lỗi khi vô hiệu hóa độc giả:', error)
-    toast.error('Vô hiệu hóa độc giả thất bại.')
+  } catch (e) {
+    toast.error("Vô hiệu hóa độc giả thất bại.")
   }
 }
 
 async function restoreReader(reader) {
   if (!confirm(`Khôi phục độc giả "${reader.Ten}"?`)) return
-
   try {
     await ReaderService.update(reader._id, { TrangThai: 'Hoạt động' })
     toast.success(`Đã khôi phục độc giả "${reader.Ten}"`)
     loadReaders()
-  } catch (error) {
-    console.error('Lỗi khi khôi phục độc giả:', error)
-    toast.error('Khôi phục độc giả thất bại.')
+  } catch (e) {
+    toast.error("Khôi phục độc giả thất bại.")
   }
+}
+
+async function viewBorrowHistory(reader) {
+  try {
+    const res = await BorrowService.history(reader.MaDocGia)
+    borrowHistory.value = res
+    const bootstrap = await import('bootstrap')
+    if (!historyModalInstance) {
+      historyModalInstance = new bootstrap.Modal(historyModalRef.value)
+    }
+    historyModalInstance.show()
+  } catch (e) {
+    toast.error('Không thể tải lịch sử mượn sách.')
+  }
+}
+
+function closeHistoryModal() {
+  historyModalInstance?.hide()
+}
+
+function formatDate(dateStr) {
+  const date = new Date(dateStr)
+  return !isNaN(date) ? date.toLocaleDateString('vi-VN') : 'Không rõ'
+}
+
+function statusClass(item) {
+  return {
+    'Chưa trả': 'badge bg-secondary',
+    'Đã trả': 'badge bg-success',
+    'Đã hủy': 'badge bg-danger',
+    'Đang mượn': 'badge bg-primary',
+    'Quá hạn': 'badge bg-danger blinking'
+  }[item.TrangThai] || 'badge bg-secondary'
 }
 </script>
 
@@ -224,5 +290,12 @@ th:nth-child(8), td:nth-child(8) { width: 130px; }
   height: 40px;
   object-fit: cover;
   border-radius: 50%;
+}
+.blinking {
+  animation: blink 1s infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 </style>
