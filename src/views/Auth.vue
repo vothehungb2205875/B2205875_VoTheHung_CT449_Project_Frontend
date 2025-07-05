@@ -169,14 +169,18 @@ const handleRegister = async () => {
     isValid = false;
   }
 
-  const phoneRegex = /^[0-9]{9,11}$/;
+  const phoneRegex = /^[0-9]{10,11}$/;
   if (!phoneRegex.test(form.DienThoai)) {
     errors.DienThoai = "Số điện thoại không hợp lệ!";
     isValid = false;
   }
 
   const today = new Date().toISOString().split("T")[0];
-  if (form.NgaySinh > today) {
+
+  if (!form.NgaySinh) {
+    errors.NgaySinh = "Vui lòng nhập ngày sinh!";
+    isValid = false;
+  } else if (form.NgaySinh > today) {
     errors.NgaySinh = "Ngày sinh không hợp lệ!";
     isValid = false;
   }

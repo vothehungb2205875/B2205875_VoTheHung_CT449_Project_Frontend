@@ -7,7 +7,7 @@
       v-model="search"
       type="text"
       class="form-control my-3"
-      placeholder="Tìm kiếm theo tên, mã sách, trạng thái..."
+      placeholder="Tìm kiếm theo mã sách, số điện thoại..."
     />
 
     <!-- Bộ lọc nâng cao -->
@@ -101,7 +101,7 @@
               <button
                 class="btn btn-sm btn-outline-danger me-2"
                 @click="cancelBorrow(item)"
-                v-if="item.TrangThai === 'Đăng ký mượn' || item.TrangThai === 'Quá hạn trả nhận'"
+                v-if="item.TrangThai === 'Đăng ký mượn' || item.TrangThai === 'Quá hạn nhận'"
               >
                 Hủy
               </button>
