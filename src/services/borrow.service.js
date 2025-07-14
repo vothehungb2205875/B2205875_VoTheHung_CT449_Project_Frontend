@@ -44,6 +44,10 @@ class BorrowService {
     return await this.api.put(`/${id}`, payload);
   }
 
+  async markAsLost(id, data) {
+    return await this.api.put(`/${id}`, data);
+  }
+
   async statistic() {
     return (await this.api.get("/statistic")).data;
   }

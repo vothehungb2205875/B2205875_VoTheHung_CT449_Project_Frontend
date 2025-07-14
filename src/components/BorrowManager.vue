@@ -18,7 +18,7 @@
       <div class="col-md-3">
         <input type="date" v-model="filterEnd" class="form-control" />
       </div>
-      <div class="col-md-3">
+      <div class="col-md-2">
         <select v-model="filterStatus" class="form-select">
           <option value="">-- Tất cả trạng thái --</option>
           <option>Đăng ký mượn</option>
@@ -35,9 +35,9 @@
       <div class="col-md-1">
         <button class="btn btn-secondary w-100" @click="resetFilters">Reset</button>
       </div>
-      <div class="col-md-1">
+      <div class="col-md-2">
         <button class="btn btn-warning w-100" @click="remindAllOverdue">
-          Email
+          Email nhắc quá hạn
         </button>
       </div>
     </div>
@@ -66,6 +66,7 @@
             <th>Ngày trả thực tế</th>
             <th>Trạng thái</th>
             <th>Thao tác</th>
+            <th>Ghi chú</th>
           </tr>
         </thead>
         <tbody>
@@ -83,38 +84,56 @@
               </span>
             </td>
             <td class="text-center">
-              <button
-                class="btn btn-sm btn-outline-primary me-2"
-                @click="markAsBorrowed(item)"
-                v-if="item.TrangThai === 'Đăng ký mượn'"
-              >
-                Đã nhận sách
-              </button>
+              <div class="d-flex flex-wrap justify-content-center gap-1">
 
-              <button
-                class="btn btn-sm btn-outline-success me-2"
-                @click="markReturned(item)"
-                v-if="item.TrangThai === 'Đang mượn' || item.TrangThai === 'Quá hạn trả'"
-              >
-                Đã trả
-              </button>
-              <button
-                class="btn btn-sm btn-outline-danger me-2"
-                @click="cancelBorrow(item)"
-                v-if="item.TrangThai === 'Đăng ký mượn' || item.TrangThai === 'Quá hạn nhận'"
-              >
-                Hủy
-              </button>
-              <button
-                class="btn btn-sm btn-outline-warning"
-                @click="remindReturn(item)"
-                v-if="item.TrangThai === 'Quá hạn trả'"
-                :disabled="loadingMap[item._id]"
-                :class="{ blinking: item.TrangThai === 'Quá hạn trả' }"
-              >
-                <span v-if="loadingMap[item._id]" class="spinner-border spinner-border-sm me-1"></span>
-                Nhắc trả
-              </button>
+                <!-- Đã nhận sách -->
+                <button
+                  v-if="item.TrangThai === 'Đăng ký mượn'"
+                  class="btn btn-sm btn-outline-primary"
+                  @click="markAsBorrowed(item)"
+                >
+                  Đã nhận sách
+                </button>
+
+                <!-- Đã trả & Mất sách -->
+                <template v-if="item.TrangThai === 'Đang mượn' || item.TrangThai === 'Quá hạn trả'">
+                  <button
+                    class="btn btn-sm btn-outline-success"
+                    @click="markReturned(item)"
+                  >
+                    Đã trả
+                  </button>
+
+                  <button
+                    class="btn btn-sm btn-outline-dark"
+                    @click="markAsLost(item)"
+                  >
+                    Mất sách
+                  </button>
+                </template>
+
+                <!-- Hủy -->
+                <button
+                  v-if="item.TrangThai === 'Đăng ký mượn' || item.TrangThai === 'Quá hạn nhận'"
+                  class="btn btn-sm btn-outline-danger"
+                  @click="cancelBorrow(item)"
+                >
+                  Hủy
+                </button>
+
+              </div>
+            </td>
+            <td>
+              <div>
+                <template v-if="extractFine(item.GhiChu) !== '0đ'">
+                  <span class="fw-semibold">
+                    Phạt: {{ extractFine(item.GhiChu) }}
+                  </span>
+                </template>
+                <button class="btn btn-sm btn-link p-0 ms-2" @click="showDetail(item)">
+                  Chi tiết
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -156,6 +175,29 @@
       Đang gửi email nhắc {{ sendProgress }}% ({{ sentCount }}/{{ totalToSend }})
     </div>
   </div>
+  <!-- Modal Chi tiết -->
+  <div v-if="showModal" class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.4);">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Chi tiết mượn sách</h5>
+          <button type="button" class="btn-close" @click="showModal = false"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Mã độc giả:</strong> {{ selectedItem?.MaDocGia }}</p>
+          <p><strong>Mã sách:</strong> {{ selectedItem?.MaSach }}</p>
+          <p><strong>Trạng thái:</strong> {{ selectedItem?.TrangThai }}</p>
+          <p><strong>Ngày mượn:</strong> {{ formatDate(selectedItem?.NgayMuon) }}</p>
+          <p><strong>Hạn trả:</strong> {{ formatDate(selectedItem?.NgayTra) }}</p>
+          <p><strong>Ngày trả TT:</strong> {{ formatDate(selectedItem?.NgayTraTT) }}</p>
+          <p><strong>Ghi chú:</strong> {{ selectedItem?.GhiChu || 'Không có' }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="showModal = false">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -163,10 +205,13 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import BorrowService from '@/services/borrow.service'
 import MailService from '@/services/mail.service'
 import ReaderService from '@/services/reader.service'
+import BookService from '@/services/book.service'
 import { toast } from 'vue3-toastify'
 
 const borrows = ref([])
 const totalBorrows = ref(0)
+const showModal = ref(false)
+const selectedItem = ref(null)
 
 const search = ref('')
 const currentPage = ref(1)
@@ -194,6 +239,11 @@ watch([search, itemsPerPage], () => {
   loadBorrows()
 })
 watch(currentPage, loadBorrows)
+
+function showDetail(item) {
+  selectedItem.value = item
+  showModal.value = true
+}
 
 async function loadBorrows() {
   try {
@@ -244,6 +294,7 @@ function statusClass(status) {
     'badge bg-success': status === 'Đã trả',
     'badge bg-danger': status === 'Đã hủy',
     'badge bg-primary': status === 'Đang mượn',
+    'badge bg-dark': status === 'Mất sách',
     'badge bg-warning text-dark': status === 'Quá hạn trả' || status === 'Quá hạn nhận',
   }
 }
@@ -277,6 +328,48 @@ async function cancelBorrow(item) {
   }
 }
 
+async function markAsLost(item) {
+  if (!confirm('Bạn chắc chắn muốn đánh dấu là mất sách?')) return
+
+  try {
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+
+    const dueDate = new Date(item.NgayTra)
+    dueDate.setHours(0, 0, 0, 0) 
+
+    const diffTime = now - dueDate
+    const lateDays = diffTime > 0 ? Math.ceil(diffTime / (1000 * 60 * 60 * 24)) : 0
+
+    let DonGia = item.DonGia
+    if (!DonGia) {
+      DonGia = await BookService.getBookPriceByMa(item.MaSach)
+      if (!DonGia) {
+        toast.error('Không thể lấy giá sách từ mã: ' + item.MaSach)
+        return
+      }
+    }
+
+    const tienPhat = lateDays * 5000 + DonGia
+
+    const data = {
+      TrangThai: 'Mất sách',
+      GhiChu: `Mất sách: ${DonGia}đ + Trễ ${lateDays} ngày: 5000đ/ngày. Phạt: ${tienPhat.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}đ`,
+    }
+
+    await BorrowService.markAsLost(item._id, data)
+
+    // Cập nhật UI
+    item.TrangThai = 'Mất sách'
+    item.GhiChu = data.GhiChu
+
+    toast.success('Đã đánh dấu là mất sách và cập nhật tiền phạt')
+  } catch (err) {
+    toast.error('Không thể cập nhật trạng thái')
+    console.error(err)
+  }
+}
+
 async function markAsBorrowed(item) {
   try {
     await BorrowService.markAsBorrowed(item._id)
@@ -284,31 +377,6 @@ async function markAsBorrowed(item) {
     toast.success('Đã chuyển trạng thái sang "Đang mượn"')
   } catch {
     toast.error('Không thể cập nhật trạng thái')
-  }
-}
-
-async function remindReturn(item) {
-  loadingMap.value[item._id] = true
-  try {
-    const reader = await ReaderService.getReaderByMa(item.MaDocGia)
-    if (!reader || !reader.email) {
-      toast.error('Không tìm thấy email độc giả!')
-      return
-    }
-
-    await MailService.sendReminder({
-      to: reader.email,
-      readerName: reader.Ten || 'Độc giả',
-      bookCode: item.MaSach,
-      dueDate: formatDate(item.NgayTra),
-    })
-
-    toast.success(`Đã gửi nhắc trả đến: ${reader.email}`)
-  } catch (err) {
-    console.error(err)
-    toast.error('Gửi email thất bại!')
-  } finally {
-    loadingMap.value[item._id] = false
   }
 }
 
@@ -371,6 +439,20 @@ function resetFilters() {
   currentPage.value = 1
   loadBorrows()
 }
+
+function extractFine(ghiChu) {
+  if (!ghiChu) return '0đ'
+  const match = ghiChu.match(/Phạt[:\s]*([\d.]+)/i)
+  if (match && match[1]) {
+    // Xóa dấu . để lấy số rồi format lại theo chuẩn Việt
+    const amount = parseInt(match[1].replace(/\./g, ''))
+    return isNaN(amount)
+      ? '0đ'
+      : amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + 'đ'
+  }
+  return '0đ'
+}
+
 </script>
 
 
@@ -380,11 +462,7 @@ function resetFilters() {
   font-size: 0.8rem;
   padding: 0.4em 0.6em;
 }
-.blinking {
-  animation: blink 1s infinite;
-  border-color: rgb(255, 162, 0);
-  color: rgb(0, 0, 0);
-}
+
 .overlay-progress {
   position: fixed;
   top: 0;
@@ -398,8 +476,5 @@ function resetFilters() {
   align-items: center;
   justify-content: center;
 }
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.2; }
-}
+
 </style>

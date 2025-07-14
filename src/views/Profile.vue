@@ -113,7 +113,8 @@
                         <div>
                           <strong>{{ item.bookTitle || 'Không rõ' }}</strong><br />
                           <small>Mượn ngày: {{ formatDate(item.NgayMuon) }}</small><br />
-                          <small>Hạn trả: {{ formatDate(item.NgayTra) }}</small>
+                          <small>Hạn trả: {{ formatDate(item.NgayTra) }}</small><br />
+                          <small class="text-danger">Ghi chú: {{ (item.GhiChu) }}</small>
                         </div>
                         <div class="text-end">
                           <span :class="statusClass(item)" class="mb-2 d-inline-block">

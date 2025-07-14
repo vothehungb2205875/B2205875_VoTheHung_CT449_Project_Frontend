@@ -56,6 +56,10 @@ class BookService {
   async getFilters() {
     return (await this.api.get("/filters")).data;
   }
+
+  async getBookPriceByMa(maSach) {
+    return (await this.api.get(`/ma/${maSach}`)).data?.DonGia ?? null;
+  }
 }
 
 export default new BookService();

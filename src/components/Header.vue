@@ -84,10 +84,18 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 const router = useRouter()
 const user = ref(null)
 
-onMounted(async() => {
-  const res = await AuthService.getCurrentUser();
-  user.value = await ReaderService.getReaderById(res._id);
-})
+onMounted(async () => {
+  try {
+    const res = await AuthService.getCurrentUser();
+    user.value = await ReaderService.getReaderById(res._id);
+  } catch (err) {
+    // Nếu lỗi do chưa đăng nhập, bỏ qua
+    if (err.response?.status !== 401) {
+      console.error('Lỗi khi lấy thông tin người dùng:', err);
+    }
+  }
+});
+
 
 function getAvatarUrl(path) {
   if (!path) return "http://localhost:3000/uploads/avatars/default.jpg"
