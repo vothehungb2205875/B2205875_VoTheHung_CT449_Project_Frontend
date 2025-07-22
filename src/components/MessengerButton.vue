@@ -6,7 +6,7 @@
     class="messenger-btn"
     title="Nhắn tin với chúng tôi qua Facebook"
   >
-  <font-awesome-icon icon="fa-brands fa-facebook-messenger" />
+  <i class="fab fa-facebook-messenger"></i>
 
   </a>
 </template>

@@ -6,28 +6,28 @@
       <p>Xin chào {{ staff?.HoTenNV || 'ADMIN' }}</p>
       <ul>
         <li @click="currentView = 'books'" :class="{ active: currentView === 'books' }">
-          <font-awesome-icon :icon="['fas', 'book']" /> Quản lý Sách
+          <i class="fas fa-book"></i> Quản lý Sách
         </li>
         <li @click="currentView = 'readers'" :class="{ active: currentView === 'readers' }">
-          <font-awesome-icon :icon="['fas', 'book-open-reader']" /> Quản lý Độc giả
+          <i class="fas fa-book-open-reader"></i> Quản lý Độc giả
         </li>
         <li @click="currentView = 'borrowings'" :class="{ active: currentView === 'borrowings' }">
-          <font-awesome-icon :icon="['fas', 'arrows-rotate']" /> Quản lý mượn sách
+          <i class="fas fa-arrows-rotate"></i> Quản lý mượn sách
         </li>
         <li @click="currentView = 'publishers'" :class="{ active: currentView === 'publishers' }">
-          <font-awesome-icon :icon="['fas', 'building']" /> Quản lý NXB
+          <i class="fas fa-building"></i> Quản lý NXB
         </li>
         <li @click="currentView = 'notifys'" :class="{ active: currentView === 'notifys' }">
-          <font-awesome-icon :icon="['fas', 'calendar']" /> Quản lý Thông báo
+          <i class="fas fa-calendar"></i> Quản lý Thông báo
         </li>
         <li @click="currentView = 'staffs'" :class="{ active: currentView === 'staffs' }">
-          <font-awesome-icon :icon="['fas', 'user-tie']" /> Quản lý nhân viên
+          <i class="fas fa-user-tie"></i> Quản lý nhân viên
         </li>
         <li @click="currentView = 'statistics'" :class="{ active: currentView === 'statistics' }">
-          <font-awesome-icon :icon="['fas', 'chart-simple']" /> Thống kê
+          <i class="fas fa-chart-simple"></i> Thống kê
         </li>
         <li @click.prevent="logout">
-          <font-awesome-icon :icon="['fas', 'right-from-bracket']" /> Đăng xuất
+          <i class="fas fa-right-from-bracket"></i> Đăng xuất
         </li>
       </ul>
     </aside>

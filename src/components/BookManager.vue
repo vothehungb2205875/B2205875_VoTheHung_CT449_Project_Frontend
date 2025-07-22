@@ -93,7 +93,8 @@
         </li>
       </ul>
     </nav>
-
+    <!-- component con -->
+    <!-- Cha thay đổi các giá trị này thì component con sẽ tự động cập nhật -->
     <BookFormModal v-model="showModal" :book="selectedBook" :mode="modalMode" @save="handleSave" />
   </div>
 </template>
@@ -101,6 +102,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue';
 import BookService from '@/services/book.service';
+// Import component con
 import BookFormModal from '@/components/BookFormModal.vue';
 import BookFilters from '@/components/BookFilters.vue';
 import { toast } from 'vue3-toastify'
@@ -172,23 +174,26 @@ function getImageUrl(path) {
   return `http://localhost:3000/${path}`;
 }
 
+// Khi bấm thêm sách, tạo dữ liệu để truyền cho component con
 function addBook() {
-  selectedBook.value = null;
-  modalMode.value = 'add';
-  showModal.value = true;
+  selectedBook.value = null; // :book
+  modalMode.value = 'add'; // :mode
+  showModal.value = true; // v-model
 }
-
+// Khi bấm sửa sách, sao chép dữ liệu sách để truyền cho component con
 function editBook(book) {
-  selectedBook.value = { ...book };
-  modalMode.value = 'edit';
-  showModal.value = true;
+  selectedBook.value = { ...book }; // :book
+  modalMode.value = 'edit'; // :mode
+  showModal.value = true; // v-model
 }
 
+// Xử lý sự kiện lưu từ component con
+// Hàm này sẽ được gọi khi người dùng nhấn nút Lưu trong modal
 async function handleSave(book) {
   try {
     const formData = new FormData();
     for (const key in book) formData.append(key, book[key]);
-
+    // Nếu là chế độ thêm thì gọi create, nếu là sửa thì gọi update
     if (modalMode.value === 'add') {
       await BookService.create(formData);
       toast.success('Thêm sách thành công');
@@ -204,6 +209,7 @@ async function handleSave(book) {
   }
 }
 
+// Xử lý sự kiện xóa sách
 async function deleteBook(book) {
   if (!confirm(`Xác nhận xóa "${book.TenSach}"?`)) return;
   try {
@@ -216,6 +222,7 @@ async function deleteBook(book) {
   }
 }
 
+// Xử lý sự kiện khôi phục sách
 async function restoreBook(book) {
   if (!confirm(`Khôi phục sách "${book.TenSach}"?`)) return;
   try {
@@ -228,6 +235,7 @@ async function restoreBook(book) {
   }
 }
 
+// Lấy giá trị cho bộ lọc
 async function loadFilters() {
   try {
     const { genres: genreList, nxbs: nxbList } = await BookService.getFilters();
@@ -239,7 +247,6 @@ async function loadFilters() {
   }
 }
 </script>
-
 
 <style scoped>
 .table td,

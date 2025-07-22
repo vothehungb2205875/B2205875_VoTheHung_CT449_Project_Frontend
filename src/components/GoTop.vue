@@ -4,8 +4,8 @@
       @click="scrollToTop"
       class="go-to-top"
       aria-label="Lên đầu trang"
-    >
-      <font-awesome-icon :icon="['fas', 'arrow-up']" />
+    > 
+      <i class="fas fa-arrow-up"></i>
     </button>
 
   </template>

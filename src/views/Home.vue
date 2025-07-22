@@ -124,7 +124,7 @@
           <div class="row g-4 justify-content-center text-center">
             <div class="col-md-6 col-lg-3" v-for="item in stats" :key="item.label">
               <div class="stat-box p-4 h-100">
-                <font-awesome-icon :icon="item.icon" class="stat-icon mb-2" />
+                <i :class="['stat-icon', 'mb-2', item.iconClass]"></i>
                 <h2 class="text-sta fw-bold">{{ item.displayed }}</h2>
                 <h6 class="text-muted mt-2">{{ item.label }}</h6>
               </div>
@@ -147,20 +147,14 @@ import BookService from '@/services/book.service';
 import NotifyService from '@/services/notify.service';
 import BorrowService from '@/services/borrow.service'
 import ReaderService from '@/services/reader.service'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import {
-  faUserPlus,
-  faBookOpenReader,
-  faArrowsRotate
-} from '@fortawesome/free-solid-svg-icons'
 
 const books = ref([]);
 const thongbaos = ref([]);
 const sukien = ref([]);
 const stats = ref([
-  { label: 'Tổng số độc giả', value: 0, displayed: 0, icon: faBookOpenReader },
-  { label: 'Độc giả mới trong tháng', value: 0, displayed: 0, icon: faUserPlus },
-  { label: 'Lượt mượn trong tháng', value: 0, displayed: 0, icon: faArrowsRotate }
+  { label: 'Tổng số độc giả', value: 0, displayed: 0, iconClass: 'fas fa-book-open-reader' },
+  { label: 'Độc giả mới trong tháng', value: 0, displayed: 0, iconClass: 'fas fa-user-plus' },
+  { label: 'Lượt mượn trong tháng', value: 0, displayed: 0, iconClass: 'fas fa-arrows-rotate' }
 ])
 
 const statSection = ref(null)

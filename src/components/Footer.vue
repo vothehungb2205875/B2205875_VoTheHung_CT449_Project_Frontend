@@ -6,10 +6,10 @@
           <!-- Cột 1: Thông tin liên hệ -->
           <div class="col-md-3 mb-3">
             <h6>Thông tin liên hệ</h6>
-            <p><font-awesome-icon icon="location-dot" class="me-2" /> Khu II, Đ. 3 Tháng 2, Xuân Khánh, Ninh Kiều, Cần Thơ</p>
-            <p><font-awesome-icon icon="phone" class="me-2" /> 0292 3831 530</p>
-            <p><font-awesome-icon icon="fax" class="me-2" /> (0292) 3 831 130</p>
-            <p><font-awesome-icon icon="envelope" class="me-2" /> tthl@ctu.edu.vn</p>
+            <p><i class="fas fa-location-dot me-2"></i> Khu II, Đ. 3 Tháng 2, Xuân Khánh, Ninh Kiều, Cần Thơ</p>
+            <p><i class="fas fa-phone me-2"></i> 0292 3831 530</p>
+            <p><i class="fas fa-fax me-2"></i> (0292) 3 831 130</p>
+            <p><i class="fas fa-envelope me-2"></i> tthl@ctu.edu.vn</p>
           </div>
 
           <!-- Cột 2: Nhà xuất bản tài trợ -->

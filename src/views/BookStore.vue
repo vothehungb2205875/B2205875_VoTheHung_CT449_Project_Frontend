@@ -155,6 +155,7 @@ watch(
 
 // Watch bộ lọc nâng cao
 watch(
+  // Hàm getter để theo dõi sự thay đổi của filter
   () => ({ ...filter.value }),
   () => {
     currentPage.value = 1
@@ -170,11 +171,15 @@ watch(currentPage, () => {
   fetchBooks()
 })
 
+// Tính tổng số trang (làm tròn lên)
 const totalPages = computed(() =>
   Math.ceil(totalBooks.value / booksPerPage)
 )
+
+// Gán danh sách sách đã phân trang
 const paginatedBooks = computed(() => books.value)
 
+// Hàm chuyển đến trang cụ thể
 function goToPage(page) {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page

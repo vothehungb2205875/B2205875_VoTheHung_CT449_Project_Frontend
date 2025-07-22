@@ -2,8 +2,9 @@
   <div class="login-page">
     <div class="overlay">
       <div class="login-form">
+        <!-- true: đăng nhập, false: đăng ký -->
         <h2 class="text-center mb-4 text-white">
-          {{ isLogin ? "Đăng nhập thư viện" : "Đăng ký tài khoản" }}
+          {{ isLogin ? "Đăng nhập thư viện" : "Đăng ký tài khoản" }} 
         </h2>
 
         <!-- Đăng nhập -->
@@ -77,7 +78,6 @@
 import { ref, reactive, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { toast } from "vue3-toastify";
-
 import AuthService from "@/services/auth.service";
 
 const router = useRouter();
@@ -115,6 +115,7 @@ const errors = reactive({
 
 const googleLoginUrl = "http://localhost:3000/api/auth/google";
 
+// Xử lý đăng nhập
 const handleLogin = async () => {
   try {
     const res = await AuthService.login({
@@ -135,11 +136,14 @@ const handleLogin = async () => {
   }
 };
 
+// Xử lý thay đổi ảnh đại diện
 const handleAvatarChange = (event) => {
   avatar.value = event.target.files[0];
 };
 
+// Xử lý đăng ký
 const handleRegister = async () => {
+  // Reset errors
   Object.keys(errors).forEach((key) => (errors[key] = ""));
   let isValid = true;
 

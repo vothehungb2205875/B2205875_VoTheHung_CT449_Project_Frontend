@@ -95,12 +95,17 @@
 import { ref, watch, computed, nextTick, onMounted } from 'vue'
 import PublisherService from '@/services/publisher.service'
 
+// props mà component con nhận từ component cha
 const props = defineProps({
+  // v-model mặc định liên kết với modelValue
   modelValue: Boolean,
   book: Object,
   mode: String
 })
 
+// emit để gửi sự kiện và dữ liệu về component cha vì props chỉ để nhận dữ liệu 1 chiều
+// update:modelValue để cập nhật giá trị của v-model
+// save để gửi dữ liệu về component cha
 const emit = defineEmits(['update:modelValue', 'save'])
 
 const formData = ref({})
@@ -121,34 +126,40 @@ const formErrors = ref({
   NamXuatBan: '',
    BiaSach: ''
 })
-
-watch(() => props.modelValue, async (val) => {
+// watch(nguồn cần theo dõi, callback(giá trị mới, giá trị cũ))
+// () => props.modelValue là getter funtion để theo dõi sự thay đổi của props.modelValue
+watch(() => props.modelValue, async (val/*giá trị mới, giá trị cũ*/) => {
+  // val true/false để bật tắt modal
   if (val) {
     // Reset dữ liệu và lỗi form
-    formData.value = props.book ? { ...props.book } : {}
+    formData.value = props.book ? { ...props.book } : {} // props.book tồn tại thì sao chép, không thì khởi tạo rỗng
     Object.keys(formErrors.value).forEach(k => formErrors.value[k] = '')
 
     // Reset ảnh xem trước
     previewImage.value = props.book?.BiaSach ? getImageUrl(props.book.BiaSach) : null
 
     await nextTick()
+    // Chưa có modal thì khởi tạo và hiển thị
     if (!modalInstance) {
       const bootstrap = await import('bootstrap')
       modalInstance = new bootstrap.Modal(modalRef.value)
     }
     modalInstance.show()
   } else {
+    // Nếu có modal thì ẩn nó
     modalInstance?.hide()
   }
 })
 
-
+// sự kiện đóng modal
 function closeDialog() {
   emit('update:modelValue', false)
 }
 
+// sự kiện submit form khi người dùng nhấn nút Lưu
 function submit() {
   if (!validateForm()) return
+  // Gửi dữ liệu về component cha thông qua sự kiện save để gọi hàm @save="handleSave"
   emit('save', formData.value)
   setTimeout(closeDialog, 50)
 }

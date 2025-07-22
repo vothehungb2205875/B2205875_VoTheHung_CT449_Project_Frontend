@@ -64,7 +64,7 @@
 
           <template v-else>
             <router-link to="/login" class="btn btn-light">
-              <font-awesome-icon icon="fa-solid fa-right-to-bracket" />
+              <i class="fas fa-right-to-bracket"></i>
               Login
             </router-link>
           </template>
@@ -79,15 +79,17 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AuthService from '@/services/auth.service'
 import ReaderService from "@/services/reader.service";
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const router = useRouter()
 const user = ref(null)
 
 onMounted(async () => {
   try {
-    const res = await AuthService.getCurrentUser();
-    user.value = await ReaderService.getReaderById(res._id);
+    const checkLogin = localStorage.getItem('user');
+    if (checkLogin) {
+      const res = await AuthService.getCurrentUser();
+      user.value = await ReaderService.getReaderById(res._id);
+    }
   } catch (err) {
     // Nếu lỗi do chưa đăng nhập, bỏ qua
     if (err.response?.status !== 401) {
@@ -95,7 +97,6 @@ onMounted(async () => {
     }
   }
 });
-
 
 function getAvatarUrl(path) {
   if (!path) return "http://localhost:3000/uploads/avatars/default.jpg"
