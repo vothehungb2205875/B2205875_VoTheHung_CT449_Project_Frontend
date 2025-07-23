@@ -238,6 +238,7 @@ async function restoreBook(book) {
 // Lấy giá trị cho bộ lọc
 async function loadFilters() {
   try {
+    // Lấy genres và nxbs từ service rồi gán vào biến reactive
     const { genres: genreList, nxbs: nxbList } = await BookService.getFilters();
     genres.value = genreList;
     nxbs.value = nxbList;

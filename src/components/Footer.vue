@@ -34,7 +34,7 @@
   
           <!-- Cột 4: Fanpage Facebook -->
           <div class="col-md-3 mb-3">
-            <h6><font-awesome-icon :icon="['fab', 'facebook']" /> Kết nối với chúng tôi</h6>
+            <h6><i class="fab fa-facebook"></i> Kết nối với chúng tôi</h6>
             <div class="fb-page"
               data-href="https://www.facebook.com/CTUDHCT" 
               data-tabs="" 
