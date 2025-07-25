@@ -18,6 +18,13 @@
           </template>
         </div>
       </div>
+
+      <!-- Hiệu ứng đang gõ -->
+      <div v-if="loading" class="chat-message bot">
+        <div class="message-bubble typing-indicator">
+          <p class="p-0 m-0">Đang nhập gì đó</p><span></span><span></span><span></span>
+        </div>
+      </div>
     </div>
 
     <!-- Input -->
@@ -212,5 +219,41 @@ textarea {
   cursor: pointer;
   font-size: 0.85rem;
   padding: 0.4rem 0.6rem;
+}
+
+/* Typing indicator (hiệu ứng đang gõ) */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0.5rem 0.75rem;
+  background-color: #f1f0f0;
+  border-radius: 0.75rem;
+}
+
+.typing-indicator span {
+  width: 6px;
+  height: 6px;
+  background-color: #888;
+  border-radius: 50%;
+  animation: typingBlink 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBlink {
+  0%, 80%, 100% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
 }
 </style>
